@@ -1,0 +1,366 @@
+package ticket.server.service;
+
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.Period;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+
+import ticket.server.exception.BuyEmptyProductException;
+import ticket.server.exception.CartPaidException;
+import ticket.server.exception.CartStatusException;
+import ticket.server.exception.ProductPriceException;
+import ticket.server.exception.TakeTimeException;
+import ticket.server.model.order.Cart;
+import ticket.server.model.order.CartFilter;
+import ticket.server.model.order.CartItem;
+import ticket.server.model.order.CartProductStat;
+import ticket.server.model.order.CartStatus;
+import ticket.server.model.order.CartStatusStat;
+import ticket.server.model.store.Product;
+import ticket.server.model.store.ProductStatus;
+import ticket.server.process.NeedPayCarMonitor;
+import ticket.server.process.NoNeedPayCartMonitor;
+import ticket.server.repository.order.CartItemRepository;
+import ticket.server.repository.order.CartRepository;
+import ticket.server.repository.store.ProductRepository;
+
+@Service
+@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+public class OrderServiceImpl implements OrderService {
+
+	@Autowired
+	ProductRepository productRepository;
+
+	@Autowired
+	CartRepository cartRepository;
+
+	@Autowired
+	CartItemRepository cartItemRepository;
+
+	@Autowired
+	NeedPayCarMonitor needPayCarMonitor;
+
+	@Autowired
+	NoNeedPayCartMonitor noNeedPayCartMonitor;
+
+	private final static Logger logger = LoggerFactory.getLogger(OrderServiceImpl.class);
+
+	@Override
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED, rollbackFor = { BuyEmptyProductException.class,
+			ProductPriceException.class, TakeTimeException.class })
+	public Cart purchaseCart(Cart cart) throws BuyEmptyProductException, ProductPriceException, TakeTimeException {
+		// 判断商品的数量是否足够
+		boolean needPay = false;
+		int payTimeLimit = Integer.MAX_VALUE;
+		int takeTimeLimit = Integer.MIN_VALUE;
+		BigDecimal totalPrice = new BigDecimal(0);
+
+		for (CartItem cartItem : cart.getCartItems()) {
+			Product product = productRepository.findOne(cartItem.getProduct().getId());
+			if (product.getUnitPrice().floatValue() != cartItem.getUnitPrice().floatValue()) {
+				logger.info("product id: " + product.getId() + " price is not equal");
+				throw new ProductPriceException(product, cartItem.getUnitPrice());
+			}
+			cartItem.setProduct(product);
+			cartItem.setName(product.getName());
+			cartItem.setUnitPrice(product.getUnitPrice());
+			cartItem.setTotalPrice(product.getUnitPrice().multiply(new BigDecimal(cartItem.getQuantity())));
+			// 产品离线，抛出异常
+			if (product.getStatus() == ProductStatus.OFFLINE) {
+				logger.info("product id: " + product.getId() + " is offline");
+				throw new BuyEmptyProductException();
+			}
+			// 产品是有限的，产品数量低于购买数量，抛出异常
+			if (!product.getInfinite() && product.getUnitsInStock() < cartItem.getQuantity()) {
+				logger.info("product id: " + product.getId() + " ,in stock is: " + product.getUnitsInStock()
+						+ ", order number is: " + cartItem.getQuantity());
+				throw new BuyEmptyProductException();
+			}
+			totalPrice = totalPrice.add(cartItem.getTotalPrice());
+			// 产品数量有限，减法购买数量
+			if (!product.getInfinite()) {
+				product.setUnitsInStock(product.getUnitsInStock() - cartItem.getQuantity());
+			}
+			product.setUnitsInOrder(product.getUnitsInOrder() + cartItem.getQuantity());
+
+			if (product.getNeedPay()) {
+				needPay = true;
+				payTimeLimit = product.getPayTimeLimit() < payTimeLimit ? product.getPayTimeLimit() : payTimeLimit;
+			}
+			takeTimeLimit = product.getTakeTimeLimit() > takeTimeLimit ? product.getTakeTimeLimit() : takeTimeLimit;
+		}
+		cart.setNeedPay(needPay);
+		cart.setTotalPrice(totalPrice);
+		if (!needPay) {
+			payTimeLimit = 0;
+			// 不需要提前支付，订单状态为商家自动确认
+			cart.setStatus(CartStatus.CONFIRMED);
+		} else {
+			cart.setStatus(CartStatus.PURCHASED);
+		}
+
+		Instant now = Instant.now();
+
+		cart.setPayTimeLimit(payTimeLimit);
+		Instant payTime = now.plus(payTimeLimit, ChronoUnit.MINUTES);
+		cart.setPayTime(Date.from(payTime));
+
+		cart.setTakeTimeLimit(takeTimeLimit);
+		Instant takeTime = now.plus(takeTimeLimit, ChronoUnit.MINUTES);
+		cart.setTakeTime(Date.from(takeTime));
+
+		// 提前支付,用户的最早取货时间不能晚于商家营业时间
+		if (needPay && cart.getTakeTime().after(cart.getTakeBeginTime())) {
+			logger.info("take time is out");
+			throw new TakeTimeException(cart.getTakeTime(), cart.getTakeBeginTime());
+		}
+
+		// save cart
+		cartRepository.saveAndFlush(cart);
+		// send cart to process queue
+		if (needPay) {
+			needPayCarMonitor.addCartToQueue(cart);
+		} else {
+			noNeedPayCartMonitor.addCartToQueue(cart);
+		}
+		logger.info("create a new cart: " + cart.toString());
+		return cart;
+	}
+
+	@Override
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED, rollbackFor = CartStatusException.class)
+	public Cart payingCart(Long cartId) throws CartStatusException {
+		Cart cart = cartRepository.findOne(cartId);
+		if (cart.getStatus() != CartStatus.PURCHASED) {
+			throw new CartStatusException(cart);
+		}
+		cart.setStatus(CartStatus.PAYING);
+		Cart dbCart = cartRepository.saveAndFlush(cart);
+		needPayCarMonitor.updateCart(dbCart);
+		logger.info("paying cart: " + dbCart.toString());
+		return cart;
+	}
+
+	@Override
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED, rollbackFor = CartStatusException.class)
+	public Cart payingFailCart(Long cartId) throws CartStatusException {
+		Cart cart = cartRepository.findOne(cartId);
+		if (cart.getStatus() != CartStatus.PAYING) {
+			throw new CartStatusException(cart);
+		}
+		cart.setStatus(CartStatus.PURCHASED);
+		cart = cartRepository.saveAndFlush(cart);
+		needPayCarMonitor.updateCart(cart);
+		logger.info("payingFail cart: " + cart.toString());
+		return cart;
+	}
+
+	@Override
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED, rollbackFor = CartStatusException.class)
+	public Cart paidCart(Long cartId) throws CartStatusException {
+		Cart cart = cartRepository.findOne(cartId);
+		if (cart.getStatus() != CartStatus.PAYING) {
+			throw new CartStatusException(cart);
+		}
+		cart.setStatus(CartStatus.CONFIRMED);
+		cart = cartRepository.saveAndFlush(cart);
+		needPayCarMonitor.removeCartInQueue(cart);
+		logger.info("paid cart: " + cart.toString());
+		return cart;
+	}
+
+	@Override
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED, rollbackFor = { CartPaidException.class })
+	public Cart weixinPaidCart(String no, String transactionId) throws CartStatusException, CartPaidException {
+		Cart cart = cartRepository.findByNo(no);
+		if (cart.getTransactionId() != null && cart.getTransactionId().equals("")) {
+			throw new CartPaidException(cart);
+		}
+		cart.setStatus(CartStatus.CONFIRMED);
+		cart.setTransactionId(transactionId);
+		cart = cartRepository.saveAndFlush(cart);
+		needPayCarMonitor.removeCartInQueue(cart);
+		logger.info("paid cart: " + cart.toString());
+		return cart;
+	}
+
+	@Override
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED, rollbackFor = CartStatusException.class)
+	public Cart deliverCart(Long cartId) throws CartStatusException {
+		Cart cart = cartRepository.findOne(cartId);
+		if (cart.getStatus() != CartStatus.CONFIRMED) {
+			throw new CartStatusException(cart);
+		}
+		cart.setStatus(CartStatus.DELIVERED);
+		// 获取订单详情，修改对应商品的当前订单数
+		cart.getCartItems().size();
+		for (CartItem cartItem : cart.getCartItems()) {
+			Product product = productRepository.findOne(cartItem.getProduct().getId());
+			product.setUnitsInOrder(product.getUnitsInOrder() - cartItem.getQuantity());
+		}
+		cart = cartRepository.saveAndFlush(cart);
+		if (!cart.getNeedPay()) {
+			// 不需要提前支付的订单如果在指定时间内取货，从订单处理系统中删除
+			noNeedPayCartMonitor.removeCartInQueue(cart);
+		}
+		logger.info("delivered cart: " + cart.toString());
+		return cart;
+	}
+
+	@Override
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED, rollbackFor = CartStatusException.class)
+	public Cart cancelCart(Long cartId) throws CartStatusException {
+		// 订单因为没有及时支付或者没有按时取商品，订单处理(OrderProcess.java)取消
+		// 把商品预订数量返回给商品
+		Cart cart = cartRepository.findOne(cartId);
+
+		if (cart.getNeedPay() && (cart.getStatus() != CartStatus.PURCHASED && cart.getStatus() != CartStatus.PAYING)) {
+			throw new CartStatusException(cart);
+		}
+		if (!cart.getNeedPay() && cart.getStatus() != CartStatus.CONFIRMED) {
+			throw new CartStatusException(cart);
+		}
+
+		cart.setStatus(CartStatus.CANCELLED);
+		// 获取订单详情，修改对应商品的当前订单数
+		cart.getCartItems().size();
+		for (CartItem cartItem : cart.getCartItems()) {
+			Product product = productRepository.findOne(cartItem.getProduct().getId());
+			if (!product.getInfinite()) {
+				product.setUnitsInStock(product.getUnitsInStock() + cartItem.getQuantity());
+			}
+			product.setUnitsInOrder(product.getUnitsInOrder() - cartItem.getQuantity());
+		}
+		logger.info("cancelled cart: " + cart.toString());
+		return cart;
+	}
+
+	@Override
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	public void deleteCart(Long cartId) {
+		cartRepository.delete(cartId);
+	}
+
+	@Override
+	public Cart findCartByNo(String no) {
+		return cartRepository.findByNo(no);
+	}
+
+	@Override
+	public Cart findWithJsonData(Long id) {
+		return cartRepository.findWithJsonData(id);
+	}
+
+	@Override
+	public List<Cart> findCartByOrder(Long merchantId, Long customerId, List<CartStatus> statuses) {
+		return cartRepository.findByOrder(merchantId, customerId, statuses);
+	}
+
+	@Override
+	public List<Cart> findCartByStatus(List<CartStatus> statuses) {
+		return cartRepository.findByStatus(statuses);
+	}
+
+	@Override
+	public List<Cart> findCartByPayAndStatus(Boolean needPay, List<CartStatus> statuses) {
+		return cartRepository.findByPayAndStatus(needPay, statuses);
+	}
+
+	@Override
+	public List<Cart> findCartByFilter(CartFilter filter, Pageable pageable) {
+		Integer startIndex = null;
+		Integer pageSize = null;
+		if (pageable != null) {
+			startIndex = pageable.getPageNumber();
+			pageSize = pageable.getPageSize();
+		}
+		return cartRepository.findByFilter(filter, startIndex, pageSize);
+	}
+
+	@Override
+	public Page<Cart> pageCartByFilter(CartFilter filter, Pageable pageable) {
+		List<Cart> carts = cartRepository.findByFilter(filter, pageable.getPageNumber(), pageable.getPageSize());
+		Long count = cartRepository.countByFilter(filter);
+		Page<Cart> page = new PageImpl<>(carts, pageable, count);
+		return page;
+	}
+
+	@Override
+	public List<CartStatusStat> statCartByStatus(CartFilter filter) {
+		return cartRepository.statByStatus(filter);
+	}
+
+	@Override
+	public List<Product> statCartByProduct(CartFilter filter) {
+		List<Product> products = productRepository.findByMerchantWithCategory(filter.getMerchantId());
+		List<CartProductStat> dbStats = cartRepository.statByProduct(filter);
+
+		for (Product product : products) {
+			product.setTakeNumber(new Long(0));
+			product.setUnTakeNumber(new Long(0));
+
+			for (CartProductStat dbStat : dbStats) {
+				if (dbStat.getProductId().equals(product.getId())) {
+					product.setTakeNumber(dbStat.getTakeNumber());
+					product.setUnTakeNumber(dbStat.getUnTakeNumber());
+				}
+			}
+		}
+		return products;
+	}
+
+	@Override
+	public Long statCartNumber(CartFilter filter) {
+		return cartRepository.statCartNumber(filter);
+	}
+
+	@Override
+	public BigDecimal statCartEarning(CartFilter filter) {
+		return cartRepository.statCartEarning(filter);
+	}
+
+	@Override
+	public Map<String, BigDecimal> statEarningByCreatedon(CartFilter filter) {
+		Map<String, BigDecimal> stats = new TreeMap<>();
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+		Instant beginInstant = Instant.ofEpochMilli(filter.getTakeBeginTimeAfter().getTime());
+		LocalDate beginLocalDate = LocalDateTime.ofInstant(beginInstant, ZoneId.systemDefault()).toLocalDate();
+
+		Instant endInstant = Instant.ofEpochMilli(filter.getTakeBeginTimeBefore().getTime());
+		LocalDate endLocalDate = LocalDateTime.ofInstant(endInstant, ZoneId.systemDefault()).toLocalDate();
+
+		Period period = Period.between(beginLocalDate, endLocalDate);
+		for (int i = 0; i <= period.getDays(); i++) {
+			LocalDate locaDate = beginLocalDate.plusDays(i);
+			stats.put(locaDate.format(formatter), new BigDecimal(0));
+		}
+
+		Map<String, BigDecimal> earningStats = cartRepository.statEarningByCreatedon(filter);
+		for (Map.Entry<String, BigDecimal> entry : earningStats.entrySet()) {
+			String key = entry.getKey();
+			BigDecimal value = entry.getValue();
+			stats.put(key, value);
+		}
+
+		return stats;
+	}
+
+}

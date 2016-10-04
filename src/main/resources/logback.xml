@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+	<property name="LOG_HOME" value="/root/apache-tomcat-8.0.36/log" />
+	<appender name="REPOSITORYFILE"
+		class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<append>true</append>
+		<File>${LOG_HOME}/repository.log</File>
+		<layout class="ch.qos.logback.classic.PatternLayout">
+			<pattern>%d %5p [ %F:%L ] - %m%n</pattern>
+		</layout>
+		<rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
+			<FileNamePattern>${LOG_HOME}/repository%i.log</FileNamePattern>
+			<minIndex>1</minIndex>
+			<maxIndex>10</maxIndex>
+		</rollingPolicy>
+		<triggeringPolicy
+			class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+			<MaxFileSize>10240KB</MaxFileSize>
+		</triggeringPolicy>
+	</appender>
+
+	<appender name="SERVICEFILE"
+		class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<append>true</append>
+		<File>${LOG_HOME}/service.log</File>
+		<layout class="ch.qos.logback.classic.PatternLayout">
+			<pattern>%d %5p [ %F:%L ] - %m%n</pattern>
+		</layout>
+		<rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
+			<FileNamePattern>${LOG_HOME}/service%i.log</FileNamePattern>
+			<minIndex>1</minIndex>
+			<maxIndex>10</maxIndex>
+		</rollingPolicy>
+		<triggeringPolicy
+			class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+			<MaxFileSize>10240KB</MaxFileSize>
+		</triggeringPolicy>
+	</appender>
+
+	<appender name="ORDERFILE"
+		class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<append>true</append>
+		<File>${LOG_HOME}/order.log</File>
+		<layout class="ch.qos.logback.classic.PatternLayout">
+			<pattern>%d %5p [ %F:%L ] - %m%n</pattern>
+		</layout>
+		<rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
+			<FileNamePattern>${LOG_HOME}/order%i.log</FileNamePattern>
+			<minIndex>1</minIndex>
+			<maxIndex>10</maxIndex>
+		</rollingPolicy>
+		<triggeringPolicy
+			class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+			<MaxFileSize>10240KB</MaxFileSize>
+		</triggeringPolicy>
+	</appender>
+    
+    <appender name="MESSAGEFILE"
+		class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<append>true</append>
+		<File>${LOG_HOME}/message.log</File>
+		<layout class="ch.qos.logback.classic.PatternLayout">
+			<pattern>%d %5p [ %F:%L ] - %m%n</pattern>
+		</layout>
+		<rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
+			<FileNamePattern>${LOG_HOME}/message%i.log</FileNamePattern>
+			<minIndex>1</minIndex>
+			<maxIndex>10</maxIndex>
+		</rollingPolicy>
+		<triggeringPolicy
+			class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+			<MaxFileSize>10240KB</MaxFileSize>
+		</triggeringPolicy>
+	</appender>
+	
+	<appender name="WEBFILE"
+		class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<append>true</append>
+		<File>${LOG_HOME}/web.log</File>
+		<layout class="ch.qos.logback.classic.PatternLayout">
+			<pattern>%d %5p [ %F:%L ] - %m%n</pattern>
+		</layout>
+		<rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
+			<FileNamePattern>${LOG_HOME}/web%i.log</FileNamePattern>
+			<minIndex>1</minIndex>
+			<maxIndex>10</maxIndex>
+		</rollingPolicy>
+		<triggeringPolicy
+			class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+			<MaxFileSize>10240KB</MaxFileSize>
+		</triggeringPolicy>
+	</appender>
+
+	<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+		<layout class="ch.qos.logback.classic.PatternLayout">
+			<Pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n
+			</Pattern>
+		</layout>
+	</appender>
+
+	<logger name="org.hibernate.type" additivity="false">
+		<level value="TRACE" />
+		<appender-ref ref="STDOUT" />
+	</logger>
+
+	<logger name="ticket.server.config.RespositoryInterceptor">
+		<level value="INFO" />
+		<appender-ref ref="REPOSITORYFILE" />
+	</logger>
+
+	<logger name="ticket.server.service">
+		<level value="INFO" />
+		<appender-ref ref="SERVICEFILE" />
+	</logger>
+
+	<logger name="ticket.server.process">
+		<level value="INFO" />
+		<appender-ref ref="ORDERFILE" />
+	</logger>
+	
+	<logger name="ticket.server.message">
+		<level value="INFO" />
+		<appender-ref ref="MESSAGEFILE" />
+	</logger>
+
+	<logger name="ticket.server.controller">
+		<level value="INFO" />
+		<appender-ref ref="WEBFILE" />
+	</logger>
+
+	<root level="INFO">
+		<appender-ref ref="STDOUT" />
+	</root>
+
+</configuration>
