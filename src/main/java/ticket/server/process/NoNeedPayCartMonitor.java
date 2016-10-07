@@ -68,12 +68,12 @@ public class NoNeedPayCartMonitor {
 	}
 
 	/**
-	 * ÏµÍ³¹Ø±ÕÊ±£¬Ò»Ð©¿Í»§¶©µ¥Ã»ÓÐ±»´¦Àí ÏµÍ³Æô¶¯Ê±£¬×°ÔØ¿Í»§¶©µ¥
+	 * ÏµÍ³ï¿½Ø±ï¿½Ê±ï¿½ï¿½Ò»Ð©ï¿½Í»ï¿½ï¿½ï¿½ï¿½ï¿½Ã»ï¿½Ð±ï¿½ï¿½ï¿½ï¿½ï¿½ ÏµÍ³ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½×°ï¿½Ø¿Í»ï¿½ï¿½ï¿½ï¿½ï¿½
 	 */
 	protected void addNotClosedCartToQueue() {
 		List<CartStatus> statuses = new ArrayList<>();
 		statuses.add(CartStatus.CONFIRMED);
-		// ²»ÐèÒªÖ§¸¶¶¨µ¥Ä¬ÈÏ×´Ì¬Îª£ºCONFIRMED
+		// ï¿½ï¿½ï¿½ï¿½ÒªÖ§ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¬ï¿½ï¿½×´Ì¬Îªï¿½ï¿½CONFIRMED
 		List<Cart> carts = cartService.findCartByPayAndStatus(false, statuses);
 
 		for (Cart cart : carts) {
@@ -84,10 +84,10 @@ public class NoNeedPayCartMonitor {
 	public void addCartToQueue(Cart cart) {
 		Instant now = Instant.now();
 		long delay = 0;
-		if (now.isAfter(cart.getTakeTime().toInstant())) {
+		if (now.isAfter(cart.getTakeEndTime().toInstant())) {
 			delay = 0;
 		} else {
-			delay = Duration.between(now, cart.getTakeTime().toInstant()).toMillis();
+			delay = Duration.between(now, cart.getTakeEndTime().toInstant()).toMillis();
 		}
 		cart.setDelayTime(delay);
 		cartQueue.put(cart);
