@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import ticket.server.message.SendCartJsonExecutor;
 import ticket.server.model.order.Cart;
 import ticket.server.model.order.CartStatus;
 import ticket.server.service.OrderService;
@@ -23,6 +24,9 @@ public class NoNeedPayCartMonitor {
 	@Autowired
 	protected OrderService cartService;
 
+	@Autowired
+	SendCartJsonExecutor sendCartJsonExecutor;
+	
 	protected DelayQueue<Cart> cartQueue;
 
 	protected ExecutorService executor;
@@ -53,6 +57,7 @@ public class NoNeedPayCartMonitor {
 						try {
 							cart = cartQueue.take();
 							Cart dbCart = cartService.cancelCart(cart.getId());
+							sendCartJsonExecutor.addCartToQueue(dbCart);
 							logger.info("canel cart," + dbCart);
 						} catch (Exception ex) {
 							logger.info("cart process error", ex);

@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import ticket.server.message.SendCartJsonExecutor;
 import ticket.server.model.order.Cart;
 import ticket.server.model.order.CartStatus;
 import ticket.server.service.OrderService;
@@ -23,6 +24,9 @@ public class NeedPayCarMonitor {
 	@Autowired
 	protected OrderService cartService;
 
+	@Autowired
+	SendCartJsonExecutor sendCartJsonExecutor;
+	
 	protected DelayQueue<Cart> cartQueue;
 
 	protected ExecutorService executor;
@@ -52,7 +56,7 @@ public class NeedPayCarMonitor {
 						Cart cart = null;
 						try {
 							cart = cartQueue.take();
-							// ����������ڸ����У�30�����
+							// 如果订单正在付款中，30秒后处理
 							if (cart.getStatus() == CartStatus.PAYING && cart.getPayingNumber() == 0 ) {
 								cart.setPayingNumber(cart.getPayingNumber()+1);
 								cart.setDelayTime(30 * 1000);
@@ -60,6 +64,7 @@ public class NeedPayCarMonitor {
 								logger.info("add paying cart," + cart);
 							} else {
 								Cart dbCart = cartService.cancelCart(cart.getId());
+								sendCartJsonExecutor.addCartToQueue(dbCart);
 								logger.info("canel cart," + dbCart);
 							}
 						} catch (Exception ex) {
@@ -76,19 +81,19 @@ public class NeedPayCarMonitor {
 	}
 
 	/**
-	 * ϵͳ�ر�ʱ��һЩ�ͻ�����û�б����� ϵͳ����ʱ��װ�ؿͻ�����
+	 * 系统关闭时，一些客户订单没有被处理 系统启动时，装载客户订单
 	 */
 	protected void addNotClosedCartToQueue() {
 		List<CartStatus> statuses = new ArrayList<>();
 
-		// ��Ҫ֧���Ķ�������û�����
+		// 需要支付的定单，还没有完成
 		statuses.add(CartStatus.PURCHASED);
 		statuses.add(CartStatus.PAYING);
 
 		List<Cart> carts = cartService.findCartByPayAndStatus(true, statuses);
 
 		for (Cart cart : carts) {
-			//����쳣������״̬�Ǹ����У��ı�״̬Ϊ��PURCHASED
+			//如果异常订单的状态是付款中，改变状态为：PURCHASED
 			cart.setStatus(CartStatus.PURCHASED);
 			addCartToQueue(cart);
 		}
