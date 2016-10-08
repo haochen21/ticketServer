@@ -85,6 +85,11 @@ public class SecurityController {
 		User user = securityService.findUser(id);
 		return user;
 	}
+	
+	@RequestMapping(value = "/user/phone/{phone}", method = RequestMethod.GET)
+	public @ResponseBody Boolean existsPhone(@PathVariable String phone) {
+		return securityService.existsByPhone(phone);
+	}
 
 	@RequestMapping(value = "/merchant", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	public User createMerchant(@RequestBody Merchant merchant) {
@@ -96,6 +101,19 @@ public class SecurityController {
 	@RequestMapping(value = "/merchant", method = RequestMethod.PUT, consumes = "application/json", produces = "application/json")
 	public User modifyMerchant(@RequestBody Merchant merchant) {
 		logger.info("modify merchant: " + merchant.toString());
+		User user = securityService.updateMerchant(merchant);
+		return user;
+	}
+	
+	@RequestMapping(value = "/merchant/weixin", method = RequestMethod.PUT, produces = "application/json")
+	public User registerMerchantInWeixin(@RequestParam(value = "id", required = true) Long id,
+			@RequestParam(value = "phone", required = true) String phone) {
+		Merchant merchant = securityService.findMerchant(id);
+		merchant.setPhone(phone);
+		Device device = securityService.findByPhone(merchant.getPhone());
+		if(device != null){
+			merchant.setDeviceNo(device.getNo());
+		}
 		User user = securityService.updateMerchant(merchant);
 		return user;
 	}
@@ -169,7 +187,7 @@ public class SecurityController {
 	}
 
 	@RequestMapping(value = "/merchant/qrCode", method = RequestMethod.POST)
-	public @ResponseBody String modifyMerchantWxTicket(@RequestParam(value = "id", required = true) Long id) {
+	public @ResponseBody String modifyMerchantQrcode(@RequestParam(value = "id", required = true) Long id) {
 		try {
 			File dir = new File(env.getRequiredProperty("imageDir") + File.separator + "merchant");
 			if (!dir.exists()) {
