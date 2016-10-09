@@ -2,24 +2,24 @@ package ticket.server.model.security;
 
 import java.io.Serializable;
 
-public class Login implements Serializable {
+public class CustomerLogin implements Serializable {
 
-	private User user;
-	
+	private Customer customer;
+
 	private LoginResult result;
-	
+
 	private static final long serialVersionUID = 6323639586206221804L;
 
-	public Login() {
+	public CustomerLogin() {
 
 	}
 
-	public User getUser() {
-		return user;
+	public Customer getCustomer() {
+		return customer;
 	}
 
-	public void setUser(User user) {
-		this.user = user;
+	public void setCustomer(Customer customer) {
+		this.customer = customer;
 	}
 
 	public LoginResult getResult() {
@@ -32,6 +32,6 @@ public class Login implements Serializable {
 
 	@Override
 	public String toString() {
-		return "Login [user=" + user + ", result=" + result.getDescription() + "]";
+		return "Login [customer=" + customer + ", result=" + result.getDescription() + "]";
 	}
 }
