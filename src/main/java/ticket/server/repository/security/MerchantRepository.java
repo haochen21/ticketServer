@@ -11,6 +11,18 @@ import ticket.server.repository.BaseRepository;
 
 public interface MerchantRepository extends BaseRepository<Merchant, Long> {
 
+	@Query("SELECT CASE WHEN COUNT(m) > 0 THEN true ELSE false END FROM Merchant m where m.loginName = :loginName")
+    Boolean existsByLoginName(@Param("loginName") String loginName);
+	
+	@Query(value = "select m from Merchant m where m.openId = :openId")
+	Merchant findByOpenId(@Param("openId") String openId);
+	
+	@Query("SELECT CASE WHEN COUNT(m) > 0 THEN true ELSE false END FROM Merchant m where m.openId = :openId")
+    Boolean existsByOpenId(@Param("openId") String openId);
+	
+	@Query("SELECT CASE WHEN COUNT(m) > 0 THEN true ELSE false END FROM Merchant m where m.phone = :phone")
+    Boolean existsByPhone(@Param("phone") String phone);
+	
 	@Query(value = "select m from Merchant m where m.loginName = :loginName")
 	Merchant findByLoginName(@Param("loginName") String loginName);
 	

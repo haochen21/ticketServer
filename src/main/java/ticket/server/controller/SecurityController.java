@@ -38,11 +38,11 @@ import com.google.zxing.common.BitMatrix;
 
 import net.coobird.thumbnailator.Thumbnails;
 import ticket.server.model.security.Customer;
+import ticket.server.model.security.CustomerLogin;
 import ticket.server.model.security.Device;
-import ticket.server.model.security.Login;
 import ticket.server.model.security.Merchant;
+import ticket.server.model.security.MerchantLogin;
 import ticket.server.model.security.OpenRange;
-import ticket.server.model.security.User;
 import ticket.server.service.SecurityService;
 
 @RestController
@@ -58,84 +58,117 @@ public class SecurityController {
 
 	private final static Logger logger = LoggerFactory.getLogger(SecurityController.class);
 
-	@RequestMapping(value = "/login", method = RequestMethod.POST, produces = "application/json")
-	public Login login(@RequestParam(value = "loginName", required = true) String loginName,
+	@RequestMapping(value = "/customer/login", method = RequestMethod.POST, produces = "application/json")
+	public CustomerLogin login(@RequestParam(value = "loginName", required = true) String loginName,
 			@RequestParam(value = "password", required = true) String password) {
-		return securityService.login(loginName, password);
+		return securityService.customerLogin(loginName, password);
 	}
 
-	@RequestMapping(value = "/loginNameExists/{loginName}", method = RequestMethod.GET)
-	public @ResponseBody Boolean existsUser(@PathVariable String loginName) {
-		return securityService.existsUserByLoginName(loginName);
+	@RequestMapping(value = "/merchant/login", method = RequestMethod.POST, produces = "application/json")
+	public MerchantLogin merchantLogin(@RequestParam(value = "loginName", required = true) String loginName,
+			@RequestParam(value = "password", required = true) String password) {
+		return securityService.merchantLogin(loginName, password);
 	}
 
-	@RequestMapping(value = "/openIdExists/{openId}", method = RequestMethod.GET)
-	public @ResponseBody Boolean existsOpenId(@PathVariable String openId) {
-		return securityService.existsByOpenId(openId);
+	@RequestMapping(value = "/customer/loginNameExists/{loginName}", method = RequestMethod.GET)
+	public @ResponseBody Boolean existsCustomerByLoginName(@PathVariable String loginName) {
+		return securityService.existsCustomerByLoginName(loginName);
 	}
 
-	@RequestMapping(value = "/user/openId/{openId}", method = RequestMethod.GET, produces = "application/json")
-	public User findUser(@PathVariable String openId) {
-		User user = securityService.findUserByOpenId(openId);
-		return user;
+	@RequestMapping(value = "/merchant/loginNameExists/{loginName}", method = RequestMethod.GET)
+	public @ResponseBody Boolean existsMerchantByLoginName(@PathVariable String loginName) {
+		return securityService.existsMerchantByLoginName(loginName);
 	}
 
-	@RequestMapping(value = "/user/{id}", method = RequestMethod.GET, produces = "application/json")
-	public User findUser(@PathVariable Long id) {
-		User user = securityService.findUser(id);
-		return user;
+	@RequestMapping(value = "/customer/openIdExists/{openId}", method = RequestMethod.GET)
+	public @ResponseBody Boolean existsCustomerByOpenId(@PathVariable String openId) {
+		return securityService.existsCustomerByOpenId(openId);
+	}
+
+	@RequestMapping(value = "/merchant/openIdExists/{openId}", method = RequestMethod.GET)
+	public @ResponseBody Boolean existsMerchantByOpenId(@PathVariable String openId) {
+		return securityService.existsMerchantByOpenId(openId);
+	}
+
+	@RequestMapping(value = "/customer/openId/{openId}", method = RequestMethod.GET, produces = "application/json")
+	public Customer findCustomerByOpenId(@PathVariable String openId) {
+		Customer customer = securityService.findCustomerByOpenId(openId);
+		return customer;
+	}
+
+	@RequestMapping(value = "/merchant/openId/{openId}", method = RequestMethod.GET, produces = "application/json")
+	public Merchant findMerchantByOpenId(@PathVariable String openId) {
+		Merchant merchant = securityService.findMerchantByOpenId(openId);
+		return merchant;
+	}
+
+	@RequestMapping(value = "/customer/{id}", method = RequestMethod.GET, produces = "application/json")
+	public Customer findCustomerById(@PathVariable Long id) {
+		Customer customer = securityService.findCustomer(id);
+		return customer;
+	}
+
+	@RequestMapping(value = "/merchant/{id}", method = RequestMethod.GET, produces = "application/json")
+	public Merchant findMerchantById(@PathVariable Long id) {
+		Merchant merchant = securityService.findMerchant(id);
+		return merchant;
+	}
+
+	@RequestMapping(value = "/customer/phone/{phone}", method = RequestMethod.GET)
+	public @ResponseBody Boolean existsCustomerByPhone(@PathVariable String phone) {
+		return securityService.existsCustomerByPhone(phone);
+	}
+
+	@RequestMapping(value = "/merchant/phone/{phone}", method = RequestMethod.GET)
+	public @ResponseBody Boolean existsMerchantByPhone(@PathVariable String phone) {
+		return securityService.existsMerchantByPhone(phone);
 	}
 	
-	@RequestMapping(value = "/user/phone/{phone}", method = RequestMethod.GET)
-	public @ResponseBody Boolean existsPhone(@PathVariable String phone) {
-		return securityService.existsByPhone(phone);
-	}
-
 	@RequestMapping(value = "/merchant", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-	public User createMerchant(@RequestBody Merchant merchant) {
+	public Merchant createMerchant(@RequestBody Merchant merchant) {
 		logger.info("register merchant: " + merchant.toString());
-		User user = securityService.saveUser(merchant);
-		return user;
+		Merchant dbMerchant = securityService.saveMerchant(merchant);
+		return dbMerchant;
 	}
 
 	@RequestMapping(value = "/merchant", method = RequestMethod.PUT, consumes = "application/json", produces = "application/json")
-	public User modifyMerchant(@RequestBody Merchant merchant) {
+	public Merchant modifyMerchant(@RequestBody Merchant merchant) {
 		logger.info("modify merchant: " + merchant.toString());
-		User user = securityService.updateMerchant(merchant);
-		return user;
+		Merchant dbMerchant = securityService.updateMerchant(merchant);
+		return dbMerchant;
 	}
-	
+
 	@RequestMapping(value = "/merchant/weixin", method = RequestMethod.PUT, produces = "application/json")
-	public User registerMerchantInWeixin(@RequestParam(value = "id", required = true) Long id,
+	public Merchant registerMerchantInWeixin(@RequestParam(value = "id", required = true) Long id,
 			@RequestParam(value = "phone", required = true) String phone) {
 		Merchant merchant = securityService.findMerchant(id);
 		merchant.setPhone(phone);
 		Device device = securityService.findByPhone(merchant.getPhone());
-		if(device != null){
+		if (device != null) {
 			merchant.setDeviceNo(device.getNo());
 		}
-		User user = securityService.updateMerchant(merchant);
-		return user;
+		Merchant dbMerchant = securityService.updateMerchant(merchant);
+		return dbMerchant;
 	}
 
 	@RequestMapping(value = "/customer", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
-	public User createCustomer(@RequestBody Customer customer) {
+	public Customer createCustomer(@RequestBody Customer customer) {
 		logger.info("register customer: " + customer.toString());
-		User user = securityService.saveUser(customer);
-		return user;
+		Customer dbCustomer = securityService.saveCustomer(customer);
+		return dbCustomer;
 	}
 
 	@RequestMapping(value = "/customer", method = RequestMethod.PUT, consumes = "application/json", produces = "application/json")
-	public User modifyCustomer(@RequestBody Customer customer) {
+	public Customer modifyCustomer(@RequestBody Customer customer) {
 		logger.info("modify customer: " + customer.toString());
-		User user = securityService.updateCustomer(customer);
-		return user;
+		Customer dbCustomer = securityService.updateCustomer(customer);
+		return dbCustomer;
 	}
 
 	@RequestMapping(value = "/customer/modifyPhone", method = RequestMethod.PUT, produces = "application/json")
 	public @ResponseBody Boolean modifyCustomerPhone(@RequestParam(value = "id", required = true) Long id,
 			@RequestParam(value = "phone", required = true) String phone) {
-		securityService.updatePhone(id, phone);
+		securityService.updateCustomerPhone(id, phone);
 		return true;
 	}
 
@@ -161,10 +194,17 @@ public class SecurityController {
 		return securityService.existsByCardNo(cardNo);
 	}
 
-	@RequestMapping(value = "/password", method = RequestMethod.PUT, produces = "application/json")
-	public @ResponseBody Boolean modifyPassword(@RequestParam(value = "id", required = true) Long id,
+	@RequestMapping(value = "/customer/password", method = RequestMethod.PUT, produces = "application/json")
+	public @ResponseBody Boolean modifyCustomerPassword(@RequestParam(value = "id", required = true) Long id,
 			@RequestParam(value = "password", required = true) String password) {
-		securityService.modifyPassword(id, password);
+		securityService.modifyCustomerPassword(id, password);
+		return true;
+	}
+	
+	@RequestMapping(value = "/merchant/password", method = RequestMethod.PUT, produces = "application/json")
+	public @ResponseBody Boolean modifyMerchantPassword(@RequestParam(value = "id", required = true) Long id,
+			@RequestParam(value = "password", required = true) String password) {
+		securityService.modifyMerchantPassword(id, password);
 		return true;
 	}
 

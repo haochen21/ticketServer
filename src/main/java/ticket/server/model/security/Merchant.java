@@ -1,15 +1,24 @@
 package ticket.server.model.security;
 
+import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 
 import javax.persistence.CascadeType;
 import javax.persistence.CollectionTable;
 import javax.persistence.Column;
-import javax.persistence.DiscriminatorValue;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.Index;
 import javax.persistence.OneToMany;
+import javax.persistence.Table;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
 import ticket.server.model.Constants;
@@ -18,11 +27,59 @@ import ticket.server.model.store.Category;
 import ticket.server.model.store.Product;
 
 @Entity
-@DiscriminatorValue("M")
-public class Merchant extends User {
+@Table(name = "MERCHANT", indexes = { @Index(name = "IDX_MERCHANT_LOGINNAME", columnList = "LOGINNAME"),
+		@Index(name = "IDX_MERCHANT_DEVICENO", columnList = "DEVICENO"),
+		@Index(name = "IDX_MERCHANT_PHONE", columnList = "PHONE"),
+		@Index(name = "IDX_MERCHANT_OPENID", columnList = "OPENID") })
+public class Merchant implements Serializable {
+    
+	@Id
+	@GeneratedValue(generator = Constants.ID_GENERATOR)
+	protected Long id;
 
+	@NotNull
+	@Column(name = "LOGINNAME", unique = true, nullable = false)
+	protected String loginName;
+
+	@Column(name = "OPENID")
+	protected String openId;
+
+	@NotNull
+	@Column(name = "NAME", nullable = false)
+	protected String name;
+
+	@NotNull
+	@Column(name = "PSW", nullable = false)
+	protected String password;
+	
 	@Column(name = "DEVICENO", unique = true)
 	protected String deviceNo;
+	
+	@Column(name = "PHONE", nullable = false)
+	protected String phone;
+	
+	@Column(name = "MAIL")
+	protected String mail;
+
+	@Column(name = "CITY")
+	protected String city;
+	
+	@Column(name = "PROVINCE")
+	protected String province;
+	
+	@Column(name = "COUNTRY")
+	protected String country;
+	
+	@Column(name = "HEADIMGURL")
+	protected String headImgUrl;
+	
+	@Column(name = "ACCOUNT")
+	protected BigDecimal account;
+
+	@Temporal(TemporalType.TIMESTAMP)
+	@Column(updatable = false)
+	@org.hibernate.annotations.CreationTimestamp
+	protected Date createdOn;	
 
 	@Column(name = "SHORTNAME")
 	protected String shortName;
@@ -69,6 +126,110 @@ public class Merchant extends User {
 
 	public Merchant() {
 		super();
+	}
+
+	public Long getId() {
+		return id;
+	}
+
+	public void setId(Long id) {
+		this.id = id;
+	}
+
+	public String getLoginName() {
+		return loginName;
+	}
+
+	public void setLoginName(String loginName) {
+		this.loginName = loginName;
+	}
+
+	public String getOpenId() {
+		return openId;
+	}
+
+	public void setOpenId(String openId) {
+		this.openId = openId;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public String getPassword() {
+		return password;
+	}
+
+	public void setPassword(String password) {
+		this.password = password;
+	}
+
+	public String getPhone() {
+		return phone;
+	}
+
+	public void setPhone(String phone) {
+		this.phone = phone;
+	}
+
+	public String getMail() {
+		return mail;
+	}
+
+	public void setMail(String mail) {
+		this.mail = mail;
+	}
+
+	public String getCity() {
+		return city;
+	}
+
+	public void setCity(String city) {
+		this.city = city;
+	}
+
+	public String getProvince() {
+		return province;
+	}
+
+	public void setProvince(String province) {
+		this.province = province;
+	}
+
+	public String getCountry() {
+		return country;
+	}
+
+	public void setCountry(String country) {
+		this.country = country;
+	}
+
+	public String getHeadImgUrl() {
+		return headImgUrl;
+	}
+
+	public void setHeadImgUrl(String headImgUrl) {
+		this.headImgUrl = headImgUrl;
+	}
+
+	public BigDecimal getAccount() {
+		return account;
+	}
+
+	public void setAccount(BigDecimal account) {
+		this.account = account;
+	}
+
+	public Date getCreatedOn() {
+		return createdOn;
+	}
+
+	public void setCreatedOn(Date createdOn) {
+		this.createdOn = createdOn;
 	}
 
 	public String getDeviceNo() {

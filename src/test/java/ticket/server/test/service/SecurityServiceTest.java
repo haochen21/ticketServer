@@ -20,11 +20,8 @@ import junit.framework.TestCase;
 import ticket.server.config.HibernateJpaConfig;
 import ticket.server.config.JmsConfig;
 import ticket.server.config.ServiceConfig;
-import ticket.server.model.security.Customer;
-import ticket.server.model.security.Login;
 import ticket.server.model.security.Merchant;
 import ticket.server.model.security.OpenRange;
-import ticket.server.model.security.User;
 import ticket.server.service.SecurityService;
 
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -33,56 +30,6 @@ public class SecurityServiceTest {
 
 	@Autowired
 	SecurityService securityService;
-
-	// @Test
-	public void createMerchant() {
-		Merchant m = new Merchant();
-		m.setName("Õñ¶¦¼¦ÆÖ½­µê");
-		m.setLoginName("zdj-pj");
-		m.setPassword("1234qwer");
-		m.setPhone("13817475681");
-		m.setMail("zdj-pj@gmail.com");
-		m.setShortName("Õñ¶¦¼¦ÆÖ½­");
-		m.setDeviceNo("1adw1ska1iw11-01");
-		User user = securityService.saveUser(m);
-		TestCase.assertNotNull(user);
-	}
-
-	// @Test
-	public void updateMerchant() {
-		Merchant m = (Merchant) securityService.findUser(new Long(391));
-		m.setDescription("ºÃ³Ô");
-		m.setPassword("qwer12345");
-
-		Merchant updateM = (Merchant) securityService.updateUser(m);
-		String pwd = User.MD5("qwer1234");
-		TestCase.assertEquals(updateM.getPassword(), pwd);
-	}
-
-	// @Test
-	public void createCustomer() {
-		Customer c = new Customer();
-		c.setName("³Âê»");
-		c.setLoginName("hugh-001");
-		c.setPassword("1234qwer");
-		c.setPhone("13817475681");
-		c.setMail("chenhao21@163.com");
-		c.setCardNo("1dmxiki21kii2-001");
-		User user = securityService.saveUser(c);
-		TestCase.assertNotNull(user);
-	}
-
-	// @Test
-	public void loginMerchant() {
-		Login login = securityService.login("xiaomian", "1234qwer");
-		TestCase.assertNotNull(login.getUser());
-	}
-
-	// @Test
-	public void existsUserByLoginName() {
-		Boolean result = securityService.existsUserByLoginName("xiaomian");
-		TestCase.assertTrue(result);
-	}
 
 	// @Test
 	public void existsDeviceByNo() {

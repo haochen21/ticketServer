@@ -9,6 +9,18 @@ import ticket.server.repository.BaseRepository;
 
 public interface CustomerRepository extends BaseRepository<Customer, Long> {
 
+	@Query("SELECT CASE WHEN COUNT(c) > 0 THEN true ELSE false END FROM Customer c where c.loginName = :loginName")
+    Boolean existsByLoginName(@Param("loginName") String loginName);
+	
+	@Query(value = "select c from Customer c where c.openId = :openId")
+	Customer findByOpenId(@Param("openId") String openId);
+	
+	@Query("SELECT CASE WHEN COUNT(c) > 0 THEN true ELSE false END FROM Customer c where c.openId = :openId")
+    Boolean existsByOpenId(@Param("openId") String openId);
+	
+	@Query("SELECT CASE WHEN COUNT(c) > 0 THEN true ELSE false END FROM Customer c where c.phone = :phone")
+    Boolean existsByPhone(@Param("phone") String phone);
+	
 	@Query(value = "select c from Customer c where c.loginName = :loginName")
 	Customer findByLoginName(@Param("loginName") String loginName);
 	

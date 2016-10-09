@@ -10,16 +10,16 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import ticket.server.model.security.Customer;
+import ticket.server.model.security.CustomerLogin;
 import ticket.server.model.security.Device;
-import ticket.server.model.security.Login;
 import ticket.server.model.security.LoginResult;
 import ticket.server.model.security.Merchant;
+import ticket.server.model.security.MerchantLogin;
 import ticket.server.model.security.OpenRange;
-import ticket.server.model.security.User;
+import ticket.server.model.security.Password;
 import ticket.server.repository.security.CustomerRepository;
 import ticket.server.repository.security.DeviceRepository;
 import ticket.server.repository.security.MerchantRepository;
-import ticket.server.repository.security.UserRepository;
 
 @Service
 @Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
@@ -32,25 +32,32 @@ public class SecurityServiceImpl implements SecurityService {
 	CustomerRepository customerRepository;
 
 	@Autowired
-	UserRepository userRepository;
-
-	@Autowired
 	DeviceRepository deviceRepository;
 
 	@Override
-	public User findUserByOpenId(String openId) {
-		return userRepository.findByOpenId(openId);
+	public Customer findCustomerByOpenId(String openId) {
+		return customerRepository.findByOpenId(openId);
 	}
 
 	@Override
-	public Boolean existsByOpenId(String openId) {
-		return userRepository.existsByOpenId(openId);
+	public Merchant findMerchantByOpenId(String openId) {
+		return merchantRepository.findByOpenId(openId);
+	}
+
+	@Override
+	public Boolean existsCustomerByOpenId(String openId) {
+		return customerRepository.existsByOpenId(openId);
+	}
+
+	@Override
+	public Boolean existsMerchantByOpenId(String openId) {
+		return merchantRepository.existsByOpenId(openId);
 	}
 
 	@Override
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	public Merchant saveMerchant(Merchant merchant) {
-		String pwd = User.MD5(merchant.getPassword());
+		String pwd = Password.PASSWORD.MD5(merchant.getPassword());
 		merchant.setPassword(pwd);
 		return merchantRepository.save(merchant);
 	}
@@ -102,19 +109,38 @@ public class SecurityServiceImpl implements SecurityService {
 	}
 
 	@Override
-	public Login merchantLogin(String loginName, String password) {
-		Login login = new Login();
+	public CustomerLogin customerLogin(String loginName, String password) {
+		CustomerLogin login = new CustomerLogin();
+		Customer customer = customerRepository.findByLoginName(loginName);
+		if (customer == null) {
+			login.setResult(LoginResult.LOGINNAMEERROR);
+		} else {
+			String pwd = Password.PASSWORD.MD5(password);
+			if (!customer.getPassword().equals(pwd)) {
+				login.setResult(LoginResult.PASSWORDERROR);
+			} else {
+				login.setResult(LoginResult.AUTHORIZED);
+				customer.setPassword("");
+				login.setCustomer(customer);
+			}
+		}
+		return login;
+	}
+
+	@Override
+	public MerchantLogin merchantLogin(String loginName, String password) {
+		MerchantLogin login = new MerchantLogin();
 		Merchant merchant = merchantRepository.findByLoginName(loginName);
 		if (merchant == null) {
 			login.setResult(LoginResult.LOGINNAMEERROR);
 		} else {
-			String pwd = User.MD5(password);
+			String pwd = Password.PASSWORD.MD5(password);
 			if (!merchant.getPassword().equals(pwd)) {
 				login.setResult(LoginResult.PASSWORDERROR);
 			} else {
 				login.setResult(LoginResult.AUTHORIZED);
 				merchant.setPassword("");
-				login.setUser(merchant);
+				login.setMerchant(merchant);
 			}
 		}
 		return login;
@@ -123,7 +149,7 @@ public class SecurityServiceImpl implements SecurityService {
 	@Override
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	public Customer saveCustomer(Customer customer) {
-		String pwd = User.MD5(customer.getPassword());
+		String pwd = Password.PASSWORD.MD5(customer.getPassword());
 		customer.setPassword(pwd);
 		return customerRepository.save(customer);
 	}
@@ -144,7 +170,7 @@ public class SecurityServiceImpl implements SecurityService {
 
 	@Override
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
-	public void updatePhone(Long id, String phone) {
+	public void updateCustomerPhone(Long id, String phone) {
 		customerRepository.updatePhone(id, phone);
 	}
 
@@ -164,53 +190,21 @@ public class SecurityServiceImpl implements SecurityService {
 	}
 
 	@Override
-	public Login customerLogin(String loginName, String password) {
-		Login login = new Login();
-		Customer customer = customerRepository.findByLoginName(loginName);
-		if (customer == null) {
-			login.setResult(LoginResult.LOGINNAMEERROR);
-		} else {
-			String pwd = User.MD5(password);
-			if (!customer.getPassword().equals(pwd)) {
-				login.setResult(LoginResult.PASSWORDERROR);
-			} else {
-				login.setResult(LoginResult.AUTHORIZED);
-				customer.setPassword("");
-				login.setUser(customer);
-			}
-		}
-		return login;
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	public void modifyCustomerPassword(Long id, String password) {
+		String pwd = Password.PASSWORD.MD5(password);
+		Customer customer = customerRepository.findOne(id);
+		customer.setPassword(pwd);
+		customerRepository.save(customer);
 	}
 
 	@Override
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
-	public User saveUser(User user) {
-		String pwd = User.MD5(user.getPassword());
-		user.setPassword(pwd);
-		return userRepository.save(user);
-	}
-
-	@Override
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
-	public User updateUser(User user) {
-		String pwd = User.MD5(user.getPassword());
-		user.setPassword(pwd);
-		User megerUser = userRepository.merge(user);
-		return userRepository.save(megerUser);
-	}
-
-	@Override
-	public User findUser(Long userId) {
-		return userRepository.findOne(userId);
-	}
-
-	@Override
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
-	public void modifyPassword(Long id, String password) {
-		String pwd = User.MD5(password);
-		User user = userRepository.findOne(id);
-		user.setPassword(pwd);
-		userRepository.save(user);
+	public void modifyMerchantPassword(Long id, String password) {
+		String pwd = Password.PASSWORD.MD5(password);
+		Merchant merchant = merchantRepository.findOne(id);
+		merchant.setPassword(pwd);
+		merchantRepository.save(merchant);
 	}
 
 	@Override
@@ -235,27 +229,13 @@ public class SecurityServiceImpl implements SecurityService {
 	}
 
 	@Override
-	public Login login(String loginName, String password) {
-		Login login = new Login();
-		User user = userRepository.findByLoginName(loginName);
-		if (user == null) {
-			login.setResult(LoginResult.LOGINNAMEERROR);
-		} else {
-			String pwd = User.MD5(password);
-			if (!user.getPassword().equals(pwd)) {
-				login.setResult(LoginResult.PASSWORDERROR);
-			} else {
-				login.setResult(LoginResult.AUTHORIZED);
-				user.setPassword("");
-				login.setUser(user);
-			}
-		}
-		return login;
+	public Boolean existsCustomerByLoginName(String loginName) {
+		return customerRepository.existsByLoginName(loginName);
 	}
 
 	@Override
-	public Boolean existsUserByLoginName(String loginName) {
-		return userRepository.existsByLoginName(loginName);
+	public Boolean existsMerchantByLoginName(String loginName) {
+		return merchantRepository.existsByLoginName(loginName);
 	}
 
 	@Override
@@ -267,7 +247,7 @@ public class SecurityServiceImpl implements SecurityService {
 	@Override
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	public void deleteDevice(Device device) {
-		deviceRepository.delete(device);		
+		deviceRepository.delete(device);
 	}
 
 	@Override
@@ -322,7 +302,12 @@ public class SecurityServiceImpl implements SecurityService {
 	}
 
 	@Override
-	public Boolean existsByPhone(String phone) {
-		return userRepository.existsByPhone(phone);
+	public Boolean existsCustomerByPhone(String phone) {
+		return customerRepository.existsByPhone(phone);
+	}
+
+	@Override
+	public Boolean existsMerchantByPhone(String phone) {
+		return merchantRepository.existsByPhone(phone);
 	}
 }

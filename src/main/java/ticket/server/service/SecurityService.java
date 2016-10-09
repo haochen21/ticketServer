@@ -5,17 +5,21 @@ import java.util.List;
 import java.util.Set;
 
 import ticket.server.model.security.Customer;
+import ticket.server.model.security.CustomerLogin;
 import ticket.server.model.security.Device;
-import ticket.server.model.security.Login;
 import ticket.server.model.security.Merchant;
+import ticket.server.model.security.MerchantLogin;
 import ticket.server.model.security.OpenRange;
-import ticket.server.model.security.User;
 
 public interface SecurityService {
 
-	User findUserByOpenId(String openId);
+	Customer findCustomerByOpenId(String openId);
 
-	Boolean existsByOpenId(String openId);
+	Merchant findMerchantByOpenId(String openId);
+
+	Boolean existsCustomerByOpenId(String openId);
+
+	Boolean existsMerchantByOpenId(String openId);
 
 	Merchant saveMerchant(Merchant merchant);
 
@@ -37,7 +41,7 @@ public interface SecurityService {
 
 	Merchant updateOpenRange(Long merchantId, Collection<OpenRange> ranges);
 
-	Login merchantLogin(String loginName, String password);
+	CustomerLogin customerLogin(String loginName, String password);
 
 	Customer saveCustomer(Customer customer);
 
@@ -49,37 +53,35 @@ public interface SecurityService {
 
 	Customer findCustomerByPhone(String phone);
 
-	void updatePhone(Long id, String phone);
+	void updateCustomerPhone(Long id, String phone);
 
-	Login customerLogin(String loginName, String password);
+	MerchantLogin merchantLogin(String loginName, String password);
 
-	Login login(String loginName, String password);
+	void modifyCustomerPassword(Long id, String password);
 
-	User saveUser(User user);
+	void modifyMerchantPassword(Long id, String password);
 
-	User updateUser(User user);
+	Boolean existsCustomerByLoginName(String loginName);
 
-	User findUser(Long userId);
-
-	void modifyPassword(Long id, String password);
-
-	Boolean existsUserByLoginName(String loginName);
+	Boolean existsMerchantByLoginName(String loginName);
 
 	Device createDevice(Device device);
 
 	void deleteDevice(Device device);
-	
+
 	Device findByNo(String no);
-	
+
 	Device findByPhone(String phone);
-	
+
 	Boolean existsDeviceByNo(String no);
 
 	Boolean existsDeviceByPhone(String phone);
 
 	Boolean existsByCardNo(String cardNo);
-	
-	Boolean existsByPhone(String phone);
+
+	Boolean existsCustomerByPhone(String phone);
+
+	Boolean existsMerchantByPhone(String phone);
 
 	Set<Merchant> saveMerchantsOfCustomer(Long customerId, Set<Long> merchantIds);
 
