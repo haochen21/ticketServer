@@ -127,7 +127,7 @@ public class Cart implements Serializable, Delayed {
 
 	@Transient
 	@JsonSerialize
-	protected Boolean cardUsed;	
+	protected Boolean cardUsed = true;	
 	
 	@Transient
 	protected int payingNumber = 0;
