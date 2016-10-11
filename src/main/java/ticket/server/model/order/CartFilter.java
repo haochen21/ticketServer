@@ -21,6 +21,8 @@ import javax.persistence.criteria.Subquery;
 
 public class CartFilter implements Serializable {
 
+	private Long cartId;
+	
 	private String no;
 
 	private Long merchantId;
@@ -57,6 +59,14 @@ public class CartFilter implements Serializable {
 
 	public CartFilter() {
 
+	}
+
+	public Long getCartId() {
+		return cartId;
+	}
+
+	public void setCartId(Long cartId) {
+		this.cartId = cartId;
 	}
 
 	public String getNo() {
@@ -226,6 +236,9 @@ public class CartFilter implements Serializable {
 	private <T> List<Predicate> getPredicates(CriteriaBuilder cb, CriteriaQuery<T> criteria, Root<Cart> root) {
 		List<Predicate> predicates = new ArrayList<>();
 
+		if (cartId != null) {
+			predicates.add(cb.equal(root.<Long>get("id"), cartId));
+		}
 		if (no != null && !no.equals("")) {
 			predicates.add(cb.like(root.<String>get("no"), "%" + no + "%"));
 		}
