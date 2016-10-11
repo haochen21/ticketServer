@@ -45,6 +45,7 @@ public class StoreServiceImpl implements StoreService {
 		megerProduct.setUnitsInStock(product.getUnitsInStock());
 		megerProduct.setInfinite(product.getInfinite());
 		megerProduct.setNeedPay(product.getNeedPay());
+		megerProduct.setOpenRange(product.getOpenRange());
 		megerProduct.setPayTimeLimit(product.getPayTimeLimit());
 		megerProduct.setTakeTimeLimit(product.getTakeTimeLimit());
 		megerProduct.setStatus(product.getStatus());

@@ -65,12 +65,17 @@ public class Product implements Serializable {
 	@Column(name = "NEEDPAY", nullable = false)
 	protected Boolean needPay;
 
+	//å…è®¸åœ¨å½“å‰è¥ä¸šæ—¶é—´æ®µä¸‹å•
+	@NotNull
+	@Column(name = "OPENRANGE", nullable = false)
+	protected Boolean openRange;
+	
 	@NotNull
 	@Column(name = "PAYTIMELIMT", nullable = false)
 	protected Integer payTimeLimit;
 
 	/**
-	 * Èç¹û²úÆ·²»ĞèÒªÖ§¸¶£¬³¬¹ıÊ±¼äºó¶©µ¥È¡Ïû
+	 * ï¿½ï¿½ï¿½ï¿½ï¿½Æ·ï¿½ï¿½ï¿½ï¿½ÒªÖ§ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ó¶©µï¿½È¡ï¿½ï¿½
 	 */
 	@NotNull
 	@Column(name = "TAKETIMELIMT", nullable = false)
@@ -183,6 +188,14 @@ public class Product implements Serializable {
 
 	public void setNeedPay(Boolean needPay) {
 		this.needPay = needPay;
+	}
+
+	public Boolean getOpenRange() {
+		return openRange;
+	}
+
+	public void setOpenRange(Boolean openRange) {
+		this.openRange = openRange;
 	}
 
 	public Integer getPayTimeLimit() {
