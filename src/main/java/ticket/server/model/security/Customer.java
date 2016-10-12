@@ -58,7 +58,7 @@ public class Customer implements Serializable {
 	@Column(name = "CARDUSED")
 	protected Boolean cardUsed = false;
 
-	@Column(name = "PHONE", unique = true)
+	@Column(name = "PHONE", nullable = false)
 	protected String phone;
 
 	@Column(name = "MAIL")
