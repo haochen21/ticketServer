@@ -92,13 +92,13 @@ public class Merchant implements Serializable {
 	protected String description;
 
 	@Column(name = "OPEN")
-	protected Boolean open = true;
+	protected Boolean open;
 
 	@Column(name = "TAKEBYPHONE")
-	protected Boolean takeByPhone = true;
+	protected Boolean takeByPhone;
 
 	@Column(name = "TAKEBYPHONESUFFIX")
-	protected Boolean takeByPhoneSuffix = true;
+	protected Boolean takeByPhoneSuffix;
 
 	@Column(name = "IMAGESOURCE")
 	@Size(min = 0, max = 255)
