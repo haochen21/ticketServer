@@ -67,11 +67,12 @@ public class OrderServiceImpl implements OrderService {
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED, rollbackFor = { BuyEmptyProductException.class,
 			ProductPriceException.class, TakeTimeException.class })
 	public Cart purchaseCart(Cart cart) throws BuyEmptyProductException, ProductPriceException, TakeTimeException {
-		// ÅÐ¶ÏÉÌÆ·µÄÊýÁ¿ÊÇ·ñ×ã¹»
+		// ï¿½Ð¶ï¿½ï¿½ï¿½Æ·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ç·ï¿½ï¿½ã¹»
 		boolean needPay = false;
 		int payTimeLimit = Integer.MAX_VALUE;
 		int takeTimeLimit = Integer.MIN_VALUE;
 		BigDecimal totalPrice = new BigDecimal(0);
+		boolean userCurrentOpenTime = true;
 
 		for (CartItem cartItem : cart.getCartItems()) {
 			Product product = productRepository.findOne(cartItem.getProduct().getId());
@@ -79,23 +80,26 @@ public class OrderServiceImpl implements OrderService {
 				logger.info("product id: " + product.getId() + " price is not equal");
 				throw new ProductPriceException(product, cartItem.getUnitPrice());
 			}
+			if (!product.getOpenRange()) {
+				userCurrentOpenTime = false;
+			}
 			cartItem.setProduct(product);
 			cartItem.setName(product.getName());
 			cartItem.setUnitPrice(product.getUnitPrice());
 			cartItem.setTotalPrice(product.getUnitPrice().multiply(new BigDecimal(cartItem.getQuantity())));
-			// ²úÆ·ÀëÏß£¬Å×³öÒì³£
+			// ï¿½ï¿½Æ·ï¿½ï¿½ï¿½ß£ï¿½ï¿½×³ï¿½ï¿½ì³£
 			if (product.getStatus() == ProductStatus.OFFLINE) {
 				logger.info("product id: " + product.getId() + " is offline");
 				throw new BuyEmptyProductException();
 			}
-			// ²úÆ·ÊÇÓÐÏÞµÄ£¬²úÆ·ÊýÁ¿µÍÓÚ¹ºÂòÊýÁ¿£¬Å×³öÒì³£
+			// ï¿½ï¿½Æ·ï¿½ï¿½ï¿½ï¿½ï¿½ÞµÄ£ï¿½ï¿½ï¿½Æ·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ú¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×³ï¿½ï¿½ì³£
 			if (!product.getInfinite() && product.getUnitsInStock() < cartItem.getQuantity()) {
 				logger.info("product id: " + product.getId() + " ,in stock is: " + product.getUnitsInStock()
 						+ ", order number is: " + cartItem.getQuantity());
 				throw new BuyEmptyProductException();
 			}
 			totalPrice = totalPrice.add(cartItem.getTotalPrice());
-			// ²úÆ·ÊýÁ¿ÓÐÏÞ£¬¼õ·¨¹ºÂòÊýÁ¿
+			// ï¿½ï¿½Æ·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Þ£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 			if (!product.getInfinite()) {
 				product.setUnitsInStock(product.getUnitsInStock() - cartItem.getQuantity());
 			}
@@ -111,7 +115,7 @@ public class OrderServiceImpl implements OrderService {
 		cart.setTotalPrice(totalPrice);
 		if (!needPay) {
 			payTimeLimit = 0;
-			// ²»ÐèÒªÌáÇ°Ö§¸¶£¬¶©µ¥×´Ì¬ÎªÉÌ¼Ò×Ô¶¯È·ÈÏ
+			// ï¿½ï¿½ï¿½ï¿½Òªï¿½ï¿½Ç°Ö§ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×´Ì¬Îªï¿½Ì¼ï¿½ï¿½Ô¶ï¿½È·ï¿½ï¿½
 			cart.setStatus(CartStatus.CONFIRMED);
 		} else {
 			cart.setStatus(CartStatus.PURCHASED);
@@ -127,10 +131,11 @@ public class OrderServiceImpl implements OrderService {
 		Instant takeTime = now.plus(takeTimeLimit, ChronoUnit.MINUTES);
 		cart.setTakeTime(Date.from(takeTime));
 
-		// ÌáÇ°Ö§¸¶,ÓÃ»§µÄ×îÔçÈ¡»õÊ±¼ä²»ÄÜÍíÓÚÉÌ¼ÒÓªÒµÊ±¼ä
-		if (needPay && cart.getTakeTime().after(cart.getTakeBeginTime())) {
-			logger.info("take time is out");
-			throw new TakeTimeException(cart.getTakeTime(), cart.getTakeBeginTime());
+		if (cart.getTakeBeginTime().before(Date.from(now)) && cart.getTakeEndTime().after(Date.from(now))) {
+			if (!userCurrentOpenTime) {
+				logger.info("take time is not in current open time");
+				throw new TakeTimeException(cart.getTakeTime(), cart.getTakeBeginTime());
+			}
 		}
 
 		// save cart
@@ -210,7 +215,7 @@ public class OrderServiceImpl implements OrderService {
 			throw new CartStatusException(cart);
 		}
 		cart.setStatus(CartStatus.DELIVERED);
-		// »ñÈ¡¶©µ¥ÏêÇé£¬ÐÞ¸Ä¶ÔÓ¦ÉÌÆ·µÄµ±Ç°¶©µ¥Êý
+		// ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½é£¬ï¿½Þ¸Ä¶ï¿½Ó¦ï¿½ï¿½Æ·ï¿½Äµï¿½Ç°ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 		cart.getCartItems().size();
 		for (CartItem cartItem : cart.getCartItems()) {
 			Product product = productRepository.findOne(cartItem.getProduct().getId());
@@ -218,7 +223,7 @@ public class OrderServiceImpl implements OrderService {
 		}
 		cart = cartRepository.saveAndFlush(cart);
 		if (!cart.getNeedPay()) {
-			// ²»ÐèÒªÌáÇ°Ö§¸¶µÄ¶©µ¥Èç¹ûÔÚÖ¸¶¨Ê±¼äÄÚÈ¡»õ£¬´Ó¶©µ¥´¦ÀíÏµÍ³ÖÐÉ¾³ý
+			// ï¿½ï¿½ï¿½ï¿½Òªï¿½ï¿½Ç°Ö§ï¿½ï¿½ï¿½Ä¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö¸ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½Ó¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÏµÍ³ï¿½ï¿½É¾ï¿½ï¿½
 			noNeedPayCartMonitor.removeCartInQueue(cart);
 		}
 		logger.info("delivered cart: " + cart.toString());
@@ -228,8 +233,8 @@ public class OrderServiceImpl implements OrderService {
 	@Override
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED, rollbackFor = CartStatusException.class)
 	public Cart cancelCart(Long cartId) throws CartStatusException {
-		// ¶©µ¥ÒòÎªÃ»ÓÐ¼°Ê±Ö§¸¶»òÕßÃ»ÓÐ°´Ê±È¡ÉÌÆ·£¬¶©µ¥´¦Àí(OrderProcess.java)È¡Ïû
-		// °ÑÉÌÆ·Ô¤¶©ÊýÁ¿·µ»Ø¸øÉÌÆ·
+		// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÎªÃ»ï¿½Ð¼ï¿½Ê±Ö§ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã»ï¿½Ð°ï¿½Ê±È¡ï¿½ï¿½Æ·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½(OrderProcess.java)È¡ï¿½ï¿½
+		// ï¿½ï¿½ï¿½ï¿½Æ·Ô¤ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ø¸ï¿½ï¿½ï¿½Æ·
 		Cart cart = cartRepository.findOne(cartId);
 
 		if (cart.getNeedPay() && (cart.getStatus() != CartStatus.PURCHASED && cart.getStatus() != CartStatus.PAYING)) {
@@ -240,7 +245,7 @@ public class OrderServiceImpl implements OrderService {
 		}
 
 		cart.setStatus(CartStatus.CANCELLED);
-		// »ñÈ¡¶©µ¥ÏêÇé£¬ÐÞ¸Ä¶ÔÓ¦ÉÌÆ·µÄµ±Ç°¶©µ¥Êý
+		// ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½é£¬ï¿½Þ¸Ä¶ï¿½Ó¦ï¿½ï¿½Æ·ï¿½Äµï¿½Ç°ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 		cart.getCartItems().size();
 		for (CartItem cartItem : cart.getCartItems()) {
 			Product product = productRepository.findOne(cartItem.getProduct().getId());
