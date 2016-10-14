@@ -281,9 +281,15 @@ public class OrderController {
 		Customer customer = null;
 		if (cardNo != null && !cardNo.equals("")) {
 			customer = securityService.findCustomerByCardNo(cardNo);
-		} else if (phone != null && !phone.equals("")
-				&& (merchant.getTakeByPhone() || merchant.getTakeByPhoneSuffix())) {
-			customer = securityService.findCustomerByPhone(phone);
+		} else if (phone != null && !phone.equals("")) {
+			if (merchant.getTakeByPhone() && merchant.getTakeByPhoneSuffix()
+					&& (phone.length() == 11 || phone.length() == 4)) {
+				customer = securityService.findCustomerByPhone(phone);
+			} else if (merchant.getTakeByPhone() && phone.length() == 11) {
+				customer = securityService.findCustomerByFullPhone(phone);
+			} else if (merchant.getTakeByPhoneSuffix() && phone.length() == 4) {
+				customer = securityService.findCustomerByPhone(phone);
+			}			
 		}
 		if (customer == null) {
 			logger.info("can't find customer,cardNo: " + cardNo + ", phone: " + phone);
@@ -292,10 +298,10 @@ public class OrderController {
 			Cart cart = new Cart();
 			cart.setCardUsed(false);
 			carts.add(cart);
-			Page<Cart> page = new PageImpl<>(carts, new PageRequest(0, 1), 0);			
+			Page<Cart> page = new PageImpl<>(carts, new PageRequest(0, 1), 0);
 			return page;
 		}
-		
+
 		CartFilter filter = new CartFilter();
 		filter.setMerchantId(merchant.getId());
 		filter.setCustomerId(customer.getId());
@@ -329,7 +335,7 @@ public class OrderController {
 				}
 				List<Cart> carts = new ArrayList<Cart>();
 				carts.add(cart);
-				page = new PageImpl<>(carts, new PageRequest(0, 1), 0);	
+				page = new PageImpl<>(carts, new PageRequest(0, 1), 0);
 			}
 		}
 		return page;

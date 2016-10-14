@@ -52,6 +52,8 @@ public interface SecurityService {
 	Customer findCustomerByCardNo(String cardNo);
 
 	Customer findCustomerByPhone(String phone);
+	
+	Customer findCustomerByFullPhone(String phone);
 
 	void updateCustomerPhone(Long id, String phone);
 

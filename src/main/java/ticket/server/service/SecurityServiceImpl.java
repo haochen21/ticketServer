@@ -190,6 +190,11 @@ public class SecurityServiceImpl implements SecurityService {
 	}
 
 	@Override
+	public Customer findCustomerByFullPhone(String phone) {
+		return customerRepository.findByFullPhone(phone);
+	}
+
+	@Override
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	public void modifyCustomerPassword(Long id, String password) {
 		String pwd = Password.PASSWORD.MD5(password);
