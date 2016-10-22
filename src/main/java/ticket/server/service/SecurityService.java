@@ -90,4 +90,6 @@ public interface SecurityService {
 	Set<Merchant> findMerchantsOfCustomer(Long customerId);
 
 	List<Merchant> findMerchantsByName(String name);
+	
+	List<OpenRange> findOpenRangeByMerchant(Long merchantId);
 }

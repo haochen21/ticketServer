@@ -1,5 +1,6 @@
 package ticket.server.service;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -20,6 +21,7 @@ import ticket.server.model.security.Password;
 import ticket.server.repository.security.CustomerRepository;
 import ticket.server.repository.security.DeviceRepository;
 import ticket.server.repository.security.MerchantRepository;
+import ticket.server.repository.security.OpenRangeRepository;
 
 @Service
 @Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
@@ -33,6 +35,9 @@ public class SecurityServiceImpl implements SecurityService {
 
 	@Autowired
 	DeviceRepository deviceRepository;
+
+	@Autowired
+	OpenRangeRepository openRangeRepository;
 
 	@Override
 	public Customer findCustomerByOpenId(String openId) {
@@ -215,10 +220,38 @@ public class SecurityServiceImpl implements SecurityService {
 	@Override
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	public Merchant updateOpenRange(Long merchantId, Collection<OpenRange> ranges) {
-		Merchant merchant = merchantRepository.findOne(merchantId);
-		merchant.setOpenRanges(ranges);
-		merchant = merchantRepository.save(merchant);
-		Merchant dbMerchant = merchantRepository.findWithOpenRange(merchantId);
+		Merchant merchant = merchantRepository.getReference(Merchant.class,merchantId);
+		List<OpenRange> dbOpenRanges = openRangeRepository.findByMerchant(merchantId);
+
+		List<OpenRange> deleteOpenRanges = new ArrayList<>();
+		for (OpenRange openRange : dbOpenRanges) {
+			boolean exist = false;
+			for (OpenRange range : ranges) {
+				if (range.getId() != null && range.getId().equals(openRange.getId())) {
+					openRange.setBeginTime(range.getBeginTime());
+					openRange.setEndTime(range.getEndTime());
+					exist = true;
+					break;
+				}
+			}
+			if (!exist) {
+				deleteOpenRanges.add(openRange);
+			}
+		}
+		for (OpenRange openRange : deleteOpenRanges) {
+			openRangeRepository.delete(openRange);
+		}
+
+		for (OpenRange range : ranges) {
+			if (range.getId() == null) {
+				range.setMerchant(merchant);
+				range = openRangeRepository.save(range);
+			}
+		}
+        openRangeRepository.getEm().flush();
+        openRangeRepository.getEm().clear();
+        
+	    Merchant dbMerchant = merchantRepository.findWithOpenRange(merchantId);
 		return dbMerchant;
 	}
 
@@ -314,5 +347,10 @@ public class SecurityServiceImpl implements SecurityService {
 	@Override
 	public Boolean existsMerchantByPhone(String phone) {
 		return merchantRepository.existsByPhone(phone);
+	}
+
+	@Override
+	public List<OpenRange> findOpenRangeByMerchant(Long merchantId) {
+		return openRangeRepository.findByMerchant(merchantId);
 	}
 }

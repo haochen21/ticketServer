@@ -1,17 +1,21 @@
 package ticket.server.service;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import ticket.server.model.security.OpenRange;
 import ticket.server.model.store.Category;
 import ticket.server.model.store.Product;
 import ticket.server.model.store.ProductStatus;
 import ticket.server.repository.security.MerchantRepository;
+import ticket.server.repository.security.OpenRangeRepository;
 import ticket.server.repository.store.CategoryRepository;
 import ticket.server.repository.store.ProductRepository;
 
@@ -28,9 +32,20 @@ public class StoreServiceImpl implements StoreService {
 	@Autowired
 	CategoryRepository categoryRepository;
 
+	@Autowired
+	OpenRangeRepository openRangeRepository;
+
 	@Override
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	public Product saveProduct(Product product) {
+		if (product.getOpenRanges() != null) {
+			Set<OpenRange> tempOpenRanges = new HashSet<>();
+			for (OpenRange openRange : product.getOpenRanges()) {
+				tempOpenRanges.add(openRangeRepository.getReference(OpenRange.class, openRange.getId()));
+
+			}
+			product.setOpenRanges(tempOpenRanges);
+		}
 		return productRepository.save(product);
 	}
 
@@ -50,7 +65,7 @@ public class StoreServiceImpl implements StoreService {
 		megerProduct.setTakeTimeLimit(product.getTakeTimeLimit());
 		megerProduct.setStatus(product.getStatus());
 		megerProduct.setCategory(product.getCategory());
-
+		megerProduct.setOpenRanges(product.getOpenRanges());
 		return productRepository.save(megerProduct);
 	}
 

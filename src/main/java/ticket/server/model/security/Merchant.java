@@ -7,9 +7,7 @@ import java.util.Collection;
 import java.util.Date;
 
 import javax.persistence.CascadeType;
-import javax.persistence.CollectionTable;
 import javax.persistence.Column;
-import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
@@ -20,6 +18,8 @@ import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import ticket.server.model.Constants;
 import ticket.server.model.order.Cart;
@@ -117,9 +117,8 @@ public class Merchant implements Serializable {
 	@OneToMany(mappedBy = "merchant", cascade = { CascadeType.PERSIST, CascadeType.REFRESH }, orphanRemoval = true)
 	protected Collection<Cart> carts = new ArrayList<Cart>();
 
-	@ElementCollection
-	@CollectionTable(name = "OPENRANGE")
-	@org.hibernate.annotations.CollectionId(columns = @Column(name = "ID"), type = @org.hibernate.annotations.Type(type = "long"), generator = Constants.ID_GENERATOR)
+	@OneToMany(mappedBy = "merchant",cascade = { CascadeType.PERSIST, CascadeType.REFRESH }, orphanRemoval = true)
+	@JsonManagedReference
 	protected Collection<OpenRange> openRanges = new ArrayList<OpenRange>();
 
 	private static final long serialVersionUID = -1573726069064463313L;

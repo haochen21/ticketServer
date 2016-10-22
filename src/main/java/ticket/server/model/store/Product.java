@@ -3,7 +3,10 @@ package ticket.server.model.store;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
@@ -13,6 +16,8 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Index;
 import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
@@ -28,6 +33,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import ticket.server.model.Constants;
 import ticket.server.model.security.Merchant;
+import ticket.server.model.security.OpenRange;
 
 @Entity
 @Table(name = "PRODUCT", uniqueConstraints = {
@@ -108,7 +114,11 @@ public class Product implements Serializable {
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "MERCHANT_ID", nullable = false)
 	protected Merchant merchant;
-
+ 
+	@ManyToMany(fetch = FetchType.EAGER,cascade = CascadeType.PERSIST)
+	@JoinTable(name = "PRODUCT_OPENRANGE", joinColumns = @JoinColumn(name = "PRODUCT_ID"), inverseJoinColumns = @JoinColumn(name = "OPENRANGE_ID"))
+	protected Set<OpenRange> openRanges = new HashSet<OpenRange>();
+	
 	@Version
 	protected long version;
 
@@ -244,6 +254,14 @@ public class Product implements Serializable {
 
 	public void setStatus(ProductStatus status) {
 		this.status = status;
+	}
+
+	public Set<OpenRange> getOpenRanges() {
+		return openRanges;
+	}
+
+	public void setOpenRanges(Set<OpenRange> openRanges) {
+		this.openRanges = openRanges;
 	}
 
 	public long getVersion() {
