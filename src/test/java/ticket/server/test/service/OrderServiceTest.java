@@ -6,8 +6,6 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
 
-import javax.annotation.PostConstruct;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,7 +13,6 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.orm.jpa.JpaOptimisticLockingFailureException;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
@@ -241,7 +238,9 @@ public class OrderServiceTest {
 	public void findCartByFilter() {
 		CartFilter filter = new CartFilter();
 		filter.setMerchantId(new Long(11));
-		filter.setCustomerId(new Long(146));
+		List<Long> customerIds = new ArrayList<>();
+		customerIds.add(new Long(146));
+		filter.setCustomerIds(customerIds);
 
 
 		List<CartStatus> statuses = new ArrayList<>();

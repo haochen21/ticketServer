@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -278,20 +279,32 @@ public class OrderController {
 			return null;
 		}
 
-		Customer customer = null;
+		List<Customer> customers = new ArrayList<>();
 		if (cardNo != null && !cardNo.equals("")) {
-			customer = securityService.findCustomerByCardNo(cardNo);
+			Customer customer = securityService.findCustomerByCardNo(cardNo);
+			if (customer != null) {
+				customers.add(customer);
+			}
 		} else if (phone != null && !phone.equals("")) {
 			if (merchant.getTakeByPhone() && merchant.getTakeByPhoneSuffix()
 					&& (phone.length() == 11 || phone.length() == 4)) {
-				customer = securityService.findCustomerByPhone(phone);
+				List<Customer> dbCustomers = securityService.findCustomerByPhone(phone);
+				if (dbCustomers != null && dbCustomers.size() > 0) {
+					customers.addAll(dbCustomers);
+				}
 			} else if (merchant.getTakeByPhone() && phone.length() == 11) {
-				customer = securityService.findCustomerByFullPhone(phone);
+				Customer customer = securityService.findCustomerByFullPhone(phone);
+				if (customer != null) {
+					customers.add(customer);
+				}
 			} else if (merchant.getTakeByPhoneSuffix() && phone.length() == 4) {
-				customer = securityService.findCustomerByPhone(phone);
-			}			
+				List<Customer> dbCustomers = securityService.findCustomerByPhone(phone);
+				if (dbCustomers != null && dbCustomers.size() > 0) {
+					customers.addAll(dbCustomers);
+				}
+			}
 		}
-		if (customer == null) {
+		if (customers.size() == 0) {
 			logger.info("can't find customer,cardNo: " + cardNo + ", phone: " + phone);
 			// 如果消费者不存在，返回卡号没使用状态
 			List<Cart> carts = new ArrayList<Cart>();
@@ -304,7 +317,7 @@ public class OrderController {
 
 		CartFilter filter = new CartFilter();
 		filter.setMerchantId(merchant.getId());
-		filter.setCustomerId(customer.getId());
+		filter.setCustomerIds(customers.stream().map(Customer::getId).collect(Collectors.toList()));
 
 		List<CartStatus> statuses = new ArrayList<>();
 		statuses.add(CartStatus.CONFIRMED);
@@ -316,22 +329,25 @@ public class OrderController {
 			filter.setTakeTime(new Date(takeTime));
 		}
 
-		Page<Cart> page = orderService.pageCartByFilter(filter, new PageRequest(0, 1));
+		Page<Cart> page = orderService.pageCartByFilter(filter, null);
 		if (page.getContent().size() > 0) {
 			// 如果第一次使用卡号获取订单，修改消费者卡使用状态为已使用
-			if (cardNo != null && !cardNo.equals("") && (customer.getCardUsed() == null || !customer.getCardUsed())) {
-				customer.setCardUsed(true);
-				customer = securityService.updateCustomer(customer);
-				page.getContent().get(0).setCustomer(customer);
+			if (cardNo != null && !cardNo.equals("")
+					&& (customers.get(0).getCardUsed() == null || !customers.get(0).getCardUsed())) {
+				customers.get(0).setCardUsed(true);
+			    securityService.updateCustomer(customers.get(0));
+				for (Cart cart : page.getContent()) {
+					cart.getCustomer().setCardUsed(true);
+				}
 			}
 		} else {
 			// 如果订单不存在，判断是不是第一次使用卡，如果是第一次使用，返回标记位
 			if (cardNo != null && !cardNo.equals("")) {
 				Cart cart = new Cart();
-				if (customer.getCardUsed() == null) {
+				if (customers.get(0).getCardUsed() == null) {
 					cart.setCardUsed(false);
 				} else {
-					cart.setCardUsed(customer.getCardUsed());
+					cart.setCardUsed(customers.get(0).getCardUsed());
 				}
 				List<Cart> carts = new ArrayList<Cart>();
 				carts.add(cart);

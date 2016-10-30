@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -302,9 +303,23 @@ public class OrderServiceImpl implements OrderService {
 
 	@Override
 	public Page<Cart> pageCartByFilter(CartFilter filter, Pageable pageable) {
-		List<Cart> carts = cartRepository.findByFilter(filter, pageable.getPageNumber(), pageable.getPageSize());
+		Integer startIndex = null;
+		Integer pageSize = null;
+		if (pageable != null) {
+			startIndex = pageable.getPageNumber();
+			pageSize = pageable.getPageSize();
+		}
+		List<Cart> carts = cartRepository.findByFilter(filter, startIndex, pageSize);
 		Long count = cartRepository.countByFilter(filter);
-		Page<Cart> page = new PageImpl<>(carts, pageable, count);
+		Page<Cart> page = null;
+		if (pageable == null) {
+			if (count == 0) {
+				count = 1l;
+			}
+			page = new PageImpl<>(carts, new PageRequest(0, Integer.parseInt("" + count)), count);
+		} else {
+			page = new PageImpl<>(carts, pageable, count);
+		}
 		return page;
 	}
 

@@ -1,5 +1,7 @@
 package ticket.server.repository.security;
 
+import java.util.List;
+
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -28,7 +30,7 @@ public interface CustomerRepository extends BaseRepository<Customer, Long> {
 	Customer findByCardNo(@Param("cardNo") String cardNo);
 
 	@Query(value = "select c from Customer c where c.phone like %:phone")
-	Customer findByPhone(@Param("phone") String phone);
+	List<Customer> findByPhone(@Param("phone") String phone);
 
 	@Query(value = "select c from Customer c where c.phone = :phone")
 	Customer findByFullPhone(@Param("phone") String phone);

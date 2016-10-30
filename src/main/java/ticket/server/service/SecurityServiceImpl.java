@@ -190,7 +190,7 @@ public class SecurityServiceImpl implements SecurityService {
 	}
 
 	@Override
-	public Customer findCustomerByPhone(String phone) {
+	public List<Customer> findCustomerByPhone(String phone) {
 		return customerRepository.findByPhone(phone);
 	}
 

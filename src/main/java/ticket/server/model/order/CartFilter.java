@@ -22,12 +22,12 @@ import javax.persistence.criteria.Subquery;
 public class CartFilter implements Serializable {
 
 	private Long cartId;
-	
+
 	private String no;
 
 	private Long merchantId;
 
-	private Long customerId;
+	private List<Long> customerIds;
 
 	private Collection<CartStatus> statuses;
 
@@ -40,7 +40,7 @@ public class CartFilter implements Serializable {
 	private Date takeBeginTimeBefore;
 
 	private Date takeBeginTimeAfter;
-	
+
 	private Date takeBeginTime;
 
 	private Date takeEndTime;
@@ -85,12 +85,12 @@ public class CartFilter implements Serializable {
 		this.merchantId = merchantId;
 	}
 
-	public Long getCustomerId() {
-		return customerId;
+	public List<Long> getCustomerIds() {
+		return customerIds;
 	}
 
-	public void setCustomerId(Long customerId) {
-		this.customerId = customerId;
+	public void setCustomerIds(List<Long> customerIds) {
+		this.customerIds = customerIds;
 	}
 
 	public Collection<CartStatus> getStatuses() {
@@ -245,8 +245,16 @@ public class CartFilter implements Serializable {
 		if (merchantId != null) {
 			predicates.add(cb.equal(root.get("merchant").<Long>get("id"), merchantId));
 		}
-		if (customerId != null) {
-			predicates.add(cb.equal(root.get("customer").<Long>get("id"), customerId));
+		if (customerIds != null) {
+			if (customerIds.size() == 1) {
+				predicates.add(cb.equal(root.get("customer").<Long>get("id"), customerIds.get(0)));
+			} else {
+				In<Long> in = cb.<Long>in(root.get("customer").<Long>get("id"));
+				for (Long customerId : customerIds) {
+					in.value(customerId);
+				}
+				predicates.add(in);
+			}
 		}
 
 		if (weixinPaid) {
@@ -275,7 +283,7 @@ public class CartFilter implements Serializable {
 		} else if (createTimeBefore != null) {
 			predicates.add(cb.lessThan(root.<Date>get("createdOn"), createTimeBefore));
 		}
-		
+
 		if (takeBeginTimeAfter != null && takeBeginTimeBefore != null) {
 			predicates.add(cb.between(root.<Date>get("takeBeginTime"), takeBeginTimeAfter, takeBeginTimeBefore));
 		} else if (takeBeginTimeAfter != null) {
@@ -314,8 +322,16 @@ public class CartFilter implements Serializable {
 		if (merchantId != null) {
 			predicates.add(cb.equal(root.get("merchant").<Long>get("id"), merchantId));
 		}
-		if (customerId != null) {
-			predicates.add(cb.equal(root.get("customer").<Long>get("id"), customerId));
+		if (customerIds != null) {
+			if (customerIds.size() == 1) {
+				predicates.add(cb.equal(root.get("customer").<Long>get("id"), customerIds.get(0)));
+			} else {
+				In<Long> in = cb.<Long>in(root.get("customer").<Long>get("id"));
+				for (Long customerId : customerIds) {
+					in.value(customerId);
+				}
+				predicates.add(in);
+			}
 		}
 
 		if (weixinPaid) {
@@ -344,7 +360,7 @@ public class CartFilter implements Serializable {
 		} else if (createTimeBefore != null) {
 			predicates.add(cb.lessThan(root.<Date>get("createdOn"), createTimeBefore));
 		}
-        
+
 		if (takeBeginTimeAfter != null && takeBeginTimeBefore != null) {
 			predicates.add(cb.between(root.<Date>get("takeBeginTime"), takeBeginTimeAfter, takeBeginTimeBefore));
 		} else if (takeBeginTimeAfter != null) {
@@ -352,7 +368,7 @@ public class CartFilter implements Serializable {
 		} else if (takeBeginTimeBefore != null) {
 			predicates.add(cb.lessThan(root.<Date>get("takeBeginTime"), takeBeginTimeBefore));
 		}
-		
+
 		if (takeBeginTime != null && takeEndTime != null) {
 			predicates.add(cb.greaterThanOrEqualTo(root.<Date>get("takeBeginTime"), takeBeginTime));
 			predicates.add(cb.lessThanOrEqualTo(root.<Date>get("takeEndTime"), takeEndTime));
