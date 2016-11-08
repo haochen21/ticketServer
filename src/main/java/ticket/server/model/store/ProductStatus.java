@@ -2,7 +2,7 @@ package ticket.server.model.store;
 
 public enum ProductStatus {
 
-	ONLINE("上架"), OFFLINE("下架");
+	ONLINE("上架"), OFFLINE("下架"), DELETE("删除");
 
 	private final String description;
 

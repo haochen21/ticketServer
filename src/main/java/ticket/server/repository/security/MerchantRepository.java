@@ -32,7 +32,7 @@ public interface MerchantRepository extends BaseRepository<Merchant, Long> {
 	@Query(value = "select m from Merchant m LEFT JOIN FETCH m.openRanges where m.id = :id")
 	Merchant findWithOpenRange(@Param("id") Long id);
 	
-	@Query(value = "select m from Merchant m where m.name like %:name%")
+	@Query(value = "select m from Merchant m where m.name like %:name% or m.shortName like %:name%")
 	List<Merchant> findByName(@Param("name") String name);
 	
 	@Modifying
