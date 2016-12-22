@@ -18,6 +18,7 @@ import ticket.server.model.security.Merchant;
 import ticket.server.model.security.MerchantLogin;
 import ticket.server.model.security.OpenRange;
 import ticket.server.model.security.Password;
+import ticket.server.model.store.Product;
 import ticket.server.repository.security.CustomerRepository;
 import ticket.server.repository.security.DeviceRepository;
 import ticket.server.repository.security.MerchantRepository;
@@ -235,10 +236,13 @@ public class SecurityServiceImpl implements SecurityService {
 				}
 			}
 			if (!exist) {
-				deleteOpenRanges.add(openRange);
+					deleteOpenRanges.add(openRange);
 			}
 		}
 		for (OpenRange openRange : deleteOpenRanges) {
+			for(Product product: openRange.getProducts()){
+				product.getOpenRanges().remove(openRange);
+			}
 			openRangeRepository.delete(openRange);
 		}
 
