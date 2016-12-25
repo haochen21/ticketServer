@@ -27,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 import ticket.server.exception.BuyEmptyProductException;
 import ticket.server.exception.CartPaidException;
 import ticket.server.exception.CartStatusException;
+import ticket.server.exception.MerchantDiscountException;
 import ticket.server.exception.ProductPriceException;
 import ticket.server.exception.TakeTimeException;
 import ticket.server.model.order.Cart;
@@ -35,17 +36,22 @@ import ticket.server.model.order.CartItem;
 import ticket.server.model.order.CartProductStat;
 import ticket.server.model.order.CartStatus;
 import ticket.server.model.order.CartStatusStat;
+import ticket.server.model.security.Merchant;
 import ticket.server.model.store.Product;
 import ticket.server.model.store.ProductStatus;
 import ticket.server.process.NeedPayCarMonitor;
 import ticket.server.process.NoNeedPayCartMonitor;
 import ticket.server.repository.order.CartItemRepository;
 import ticket.server.repository.order.CartRepository;
+import ticket.server.repository.security.MerchantRepository;
 import ticket.server.repository.store.ProductRepository;
 
 @Service
 @Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 public class OrderServiceImpl implements OrderService {
+
+	@Autowired
+	MerchantRepository merchantRepository;
 
 	@Autowired
 	ProductRepository productRepository;
@@ -66,9 +72,15 @@ public class OrderServiceImpl implements OrderService {
 
 	@Override
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED, rollbackFor = { BuyEmptyProductException.class,
-			ProductPriceException.class, TakeTimeException.class })
-	public Cart purchaseCart(Cart cart) throws BuyEmptyProductException, ProductPriceException, TakeTimeException {
-		// �ж���Ʒ�������Ƿ��㹻
+			ProductPriceException.class, TakeTimeException.class, MerchantDiscountException.class })
+	public Cart purchaseCart(Cart cart)
+			throws BuyEmptyProductException, ProductPriceException, TakeTimeException, MerchantDiscountException {
+		Merchant dbMerchant = merchantRepository.findOne(cart.getMerchant().getId());
+		if (!cart.getMerchant().getDiscount().equals(dbMerchant.getDiscount())) {
+			logger.info("merchant id: " + dbMerchant.getId() + " discount is change....");
+			throw new MerchantDiscountException(dbMerchant, cart.getMerchant().getDiscount());
+		}
+
 		boolean needPay = false;
 		int payTimeLimit = Integer.MAX_VALUE;
 		int takeTimeLimit = Integer.MIN_VALUE;
@@ -113,7 +125,7 @@ public class OrderServiceImpl implements OrderService {
 			takeTimeLimit = product.getTakeTimeLimit() > takeTimeLimit ? product.getTakeTimeLimit() : takeTimeLimit;
 		}
 		cart.setNeedPay(needPay);
-		cart.setTotalPrice(totalPrice);
+		cart.setTotalPrice(totalPrice.multiply(new BigDecimal(dbMerchant.getDiscount())));
 		if (!needPay) {
 			payTimeLimit = 0;
 			// ����Ҫ��ǰ֧��������״̬Ϊ�̼��Զ�ȷ��

@@ -32,7 +32,7 @@ import ticket.server.model.store.Product;
 		@Index(name = "IDX_MERCHANT_PHONE", columnList = "PHONE"),
 		@Index(name = "IDX_MERCHANT_OPENID", columnList = "OPENID") })
 public class Merchant implements Serializable {
-    
+
 	@Id
 	@GeneratedValue(generator = Constants.ID_GENERATOR)
 	protected Long id;
@@ -51,35 +51,35 @@ public class Merchant implements Serializable {
 	@NotNull
 	@Column(name = "PSW", nullable = false)
 	protected String password;
-	
+
 	@Column(name = "DEVICENO", unique = true)
 	protected String deviceNo;
-	
+
 	@Column(name = "PHONE", nullable = false)
 	protected String phone;
-	
+
 	@Column(name = "MAIL")
 	protected String mail;
 
 	@Column(name = "CITY")
 	protected String city;
-	
+
 	@Column(name = "PROVINCE")
 	protected String province;
-	
+
 	@Column(name = "COUNTRY")
 	protected String country;
-	
+
 	@Column(name = "HEADIMGURL")
 	protected String headImgUrl;
-	
+
 	@Column(name = "ACCOUNT")
 	protected BigDecimal account;
 
 	@Temporal(TemporalType.TIMESTAMP)
 	@Column(updatable = false)
 	@org.hibernate.annotations.CreationTimestamp
-	protected Date createdOn;	
+	protected Date createdOn;
 
 	@Column(name = "SHORTNAME")
 	protected String shortName;
@@ -108,6 +108,9 @@ public class Merchant implements Serializable {
 	@Size(min = 0, max = 255)
 	protected String qrCode;
 
+	@Column(name = "DISCOUNT")
+	protected Float discount;
+
 	@OneToMany(mappedBy = "merchant", cascade = { CascadeType.PERSIST, CascadeType.REFRESH }, orphanRemoval = true)
 	protected Collection<Category> categorys = new ArrayList<Category>();
 
@@ -117,7 +120,7 @@ public class Merchant implements Serializable {
 	@OneToMany(mappedBy = "merchant", cascade = { CascadeType.PERSIST, CascadeType.REFRESH }, orphanRemoval = true)
 	protected Collection<Cart> carts = new ArrayList<Cart>();
 
-	@OneToMany(mappedBy = "merchant",cascade = { CascadeType.PERSIST, CascadeType.REFRESH }, orphanRemoval = true)
+	@OneToMany(mappedBy = "merchant", cascade = { CascadeType.PERSIST, CascadeType.REFRESH }, orphanRemoval = true)
 	@JsonManagedReference
 	protected Collection<OpenRange> openRanges = new ArrayList<OpenRange>();
 
@@ -301,6 +304,14 @@ public class Merchant implements Serializable {
 
 	public void setQrCode(String qrCode) {
 		this.qrCode = qrCode;
+	}
+
+	public Float getDiscount() {
+		return discount;
+	}
+
+	public void setDiscount(Float discount) {
+		this.discount = discount;
 	}
 
 	public Collection<Category> getCategorys() {

@@ -22,6 +22,7 @@ import ticket.server.config.JmsConfig;
 import ticket.server.config.ServiceConfig;
 import ticket.server.exception.BuyEmptyProductException;
 import ticket.server.exception.CartStatusException;
+import ticket.server.exception.MerchantDiscountException;
 import ticket.server.exception.ProductPriceException;
 import ticket.server.exception.TakeTimeException;
 import ticket.server.message.SendCartJsonExecutor;
@@ -143,6 +144,9 @@ public class OrderServiceTest {
 				ex.printStackTrace();
 				process = false;
 			} catch (TakeTimeException ex) {
+				ex.printStackTrace();
+				process = false;
+			} catch (MerchantDiscountException ex) {
 				ex.printStackTrace();
 				process = false;
 			} catch (JpaOptimisticLockingFailureException ex) {

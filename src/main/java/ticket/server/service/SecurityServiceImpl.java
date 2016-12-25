@@ -83,6 +83,7 @@ public class SecurityServiceImpl implements SecurityService {
 		dbMerchant.setOpen(merchant.getOpen());
 		dbMerchant.setTakeByPhone(merchant.getTakeByPhone());
 		dbMerchant.setTakeByPhoneSuffix(merchant.getTakeByPhoneSuffix());
+		dbMerchant.setDiscount(merchant.getDiscount());
 		return merchantRepository.save(dbMerchant);
 	}
 

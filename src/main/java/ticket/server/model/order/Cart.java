@@ -26,6 +26,7 @@ import javax.persistence.TemporalType;
 import javax.persistence.Transient;
 import javax.persistence.Version;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
@@ -117,6 +118,10 @@ public class Cart implements Serializable, Delayed {
 	@org.hibernate.annotations.UpdateTimestamp
 	protected Date updatedOn;
 
+	@Column(name = "REMARK")
+	@Size(min = 0, max = 255)
+	protected String remark;
+	
 	@OneToMany(mappedBy = "cart", cascade = { CascadeType.PERSIST, CascadeType.REFRESH,
 			CascadeType.REMOVE }, orphanRemoval = true)
 	@JsonManagedReference
@@ -267,6 +272,14 @@ public class Cart implements Serializable, Delayed {
 
 	public Date getUpdatedOn() {
 		return updatedOn;
+	}
+
+	public String getRemark() {
+		return remark;
+	}
+
+	public void setRemark(String remark) {
+		this.remark = remark;
 	}
 
 	public long getVersion() {

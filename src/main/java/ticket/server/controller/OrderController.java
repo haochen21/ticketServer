@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 import ticket.server.exception.BuyEmptyProductException;
 import ticket.server.exception.CartPaidException;
 import ticket.server.exception.CartStatusException;
+import ticket.server.exception.MerchantDiscountException;
 import ticket.server.exception.ProductPriceException;
 import ticket.server.exception.TakeTimeException;
 import ticket.server.message.SendCartJsonExecutor;
@@ -132,6 +133,11 @@ public class OrderController {
 				logger.info("purchase order fail...", ex);
 				result.setResult(false);
 				result.setError("订单提交时间晚于店铺开始营业时间");
+				process = false;
+			} catch (MerchantDiscountException ex) {
+				logger.info("purchase order fail...", ex);
+				result.setResult(false);
+				result.setError("商家商品折扣已经改变");
 				process = false;
 			} catch (JpaOptimisticLockingFailureException ex) {
 				logger.info("purchase order fail...", ex);
@@ -335,7 +341,7 @@ public class OrderController {
 			if (cardNo != null && !cardNo.equals("")
 					&& (customers.get(0).getCardUsed() == null || !customers.get(0).getCardUsed())) {
 				customers.get(0).setCardUsed(true);
-			    securityService.updateCustomer(customers.get(0));
+				securityService.updateCustomer(customers.get(0));
 				for (Cart cart : page.getContent()) {
 					cart.getCustomer().setCardUsed(true);
 				}
