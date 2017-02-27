@@ -73,9 +73,6 @@ public class Merchant implements Serializable {
 	@Column(name = "HEADIMGURL")
 	protected String headImgUrl;
 
-	@Column(name = "ACCOUNT")
-	protected BigDecimal account;
-
 	@Temporal(TemporalType.TIMESTAMP)
 	@Column(updatable = false)
 	@org.hibernate.annotations.CreationTimestamp
@@ -216,14 +213,6 @@ public class Merchant implements Serializable {
 
 	public void setHeadImgUrl(String headImgUrl) {
 		this.headImgUrl = headImgUrl;
-	}
-
-	public BigDecimal getAccount() {
-		return account;
-	}
-
-	public void setAccount(BigDecimal account) {
-		this.account = account;
 	}
 
 	public Date getCreatedOn() {
