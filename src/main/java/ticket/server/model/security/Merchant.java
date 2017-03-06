@@ -1,7 +1,6 @@
 package ticket.server.model.security;
 
 import java.io.Serializable;
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -9,6 +8,8 @@ import java.util.Date;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Index;
@@ -19,6 +20,7 @@ import javax.persistence.TemporalType;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import ticket.server.model.Constants;
@@ -105,8 +107,22 @@ public class Merchant implements Serializable {
 	@Size(min = 0, max = 255)
 	protected String qrCode;
 
+	@Enumerated(EnumType.STRING)
+	@Column(name = "DISCOUNTTYPE")
+	@JsonFormat(shape = JsonFormat.Shape.NUMBER_INT)
+	protected DiscountType discountType;
+
+	// 百分比折扣
 	@Column(name = "DISCOUNT")
 	protected Float discount;
+
+	// 减价折扣
+	@Column(name = "AMOUNT")
+	protected Float amount;
+
+	// 外卖
+	@Column(name = "TAKEOUT")
+	protected Boolean takeOut;
 
 	@OneToMany(mappedBy = "merchant", cascade = { CascadeType.PERSIST, CascadeType.REFRESH }, orphanRemoval = true)
 	protected Collection<Category> categorys = new ArrayList<Category>();
@@ -287,6 +303,14 @@ public class Merchant implements Serializable {
 		this.imageSource = imageSource;
 	}
 
+	public Boolean getTakeOut() {
+		return takeOut;
+	}
+
+	public void setTakeOut(Boolean takeOut) {
+		this.takeOut = takeOut;
+	}
+
 	public String getQrCode() {
 		return qrCode;
 	}
@@ -295,12 +319,28 @@ public class Merchant implements Serializable {
 		this.qrCode = qrCode;
 	}
 
+	public DiscountType getDiscountType() {
+		return discountType;
+	}
+
+	public void setDiscountType(DiscountType discountType) {
+		this.discountType = discountType;
+	}
+
 	public Float getDiscount() {
 		return discount;
 	}
 
 	public void setDiscount(Float discount) {
 		this.discount = discount;
+	}
+
+	public Float getAmount() {
+		return amount;
+	}
+
+	public void setAmount(Float amount) {
+		this.amount = amount;
 	}
 
 	public Collection<Category> getCategorys() {

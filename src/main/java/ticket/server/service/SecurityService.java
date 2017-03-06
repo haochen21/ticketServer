@@ -32,6 +32,8 @@ public interface SecurityService {
 	Merchant findMerchantByDeviceNo(String deviceNo);
 
 	void updateMerchantOpen(Long id, Boolean open);
+	
+	void updateMerchantTakeOut(Long id, Boolean takeOut);
 
 	void updateMerchantImageSource(Long id, String imageSource);
 

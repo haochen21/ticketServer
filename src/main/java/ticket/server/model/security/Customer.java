@@ -73,6 +73,9 @@ public class Customer implements Serializable {
 	@Column(name = "COUNTRY")
 	protected String country;
 
+	@Column(name = "ADDRESS")
+	protected String address;
+	
 	@Column(name = "HEADIMGURL")
 	protected String headImgUrl;
 
@@ -175,6 +178,14 @@ public class Customer implements Serializable {
 
 	public void setCountry(String country) {
 		this.country = country;
+	}
+
+	public String getAddress() {
+		return address;
+	}
+
+	public void setAddress(String address) {
+		this.address = address;
 	}
 
 	public String getHeadImgUrl() {

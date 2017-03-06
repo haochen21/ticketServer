@@ -36,6 +36,7 @@ import ticket.server.model.order.CartItem;
 import ticket.server.model.order.CartProductStat;
 import ticket.server.model.order.CartStatus;
 import ticket.server.model.order.CartStatusStat;
+import ticket.server.model.security.DiscountType;
 import ticket.server.model.security.Merchant;
 import ticket.server.model.store.Product;
 import ticket.server.model.store.ProductStatus;
@@ -76,8 +77,21 @@ public class OrderServiceImpl implements OrderService {
 	public Cart purchaseCart(Cart cart)
 			throws BuyEmptyProductException, ProductPriceException, TakeTimeException, MerchantDiscountException {
 		Merchant dbMerchant = merchantRepository.findOne(cart.getMerchant().getId());
-		if (!cart.getMerchant().getDiscount().equals(dbMerchant.getDiscount())) {
-			logger.info("merchant id: " + dbMerchant.getId() + " discount is change....");
+
+		if (cart.getMerchant().getDiscountType() != dbMerchant.getDiscountType()) {
+			logger.info("merchant id: " + dbMerchant.getId() + " discountType is change....");
+			throw new MerchantDiscountException(dbMerchant, cart.getMerchant().getDiscount());
+		}
+
+		if (dbMerchant.getDiscountType() == DiscountType.PERCNET
+				&& !cart.getMerchant().getDiscount().equals(dbMerchant.getDiscount())) {
+			logger.info("merchant id: " + dbMerchant.getId() + " discount percent is change....");
+			throw new MerchantDiscountException(dbMerchant, cart.getMerchant().getDiscount());
+		}
+
+		if (dbMerchant.getDiscountType() == DiscountType.AMOUNT
+				&& !cart.getMerchant().getAmount().equals(dbMerchant.getAmount())) {
+			logger.info("merchant id: " + dbMerchant.getId() + " discount amount is change....");
 			throw new MerchantDiscountException(dbMerchant, cart.getMerchant().getDiscount());
 		}
 
@@ -98,8 +112,18 @@ public class OrderServiceImpl implements OrderService {
 			}
 			cartItem.setProduct(product);
 			cartItem.setName(product.getName());
-			cartItem.setUnitPrice(product.getUnitPrice());
-			cartItem.setTotalPrice(product.getUnitPrice().multiply(new BigDecimal(cartItem.getQuantity())));
+			if (dbMerchant.getDiscountType() != null) {
+				if (dbMerchant.getDiscountType() == DiscountType.PERCNET) {
+					cartItem.setUnitPrice(product.getUnitPrice().multiply(new BigDecimal(dbMerchant.getDiscount())));
+					
+				} else if (dbMerchant.getDiscountType() == DiscountType.AMOUNT) {
+					cartItem.setUnitPrice(product.getUnitPrice().subtract(new BigDecimal(dbMerchant.getAmount())));
+				}
+			} else {
+				cart.setTotalPrice(totalPrice);
+			}
+			cartItem.setTotalPrice(cartItem.getUnitPrice().multiply(new BigDecimal(cartItem.getQuantity())));
+			
 			// ��Ʒ���ߣ��׳��쳣
 			if (product.getStatus() == ProductStatus.OFFLINE) {
 				logger.info("product id: " + product.getId() + " is offline");
@@ -125,7 +149,8 @@ public class OrderServiceImpl implements OrderService {
 			takeTimeLimit = product.getTakeTimeLimit() > takeTimeLimit ? product.getTakeTimeLimit() : takeTimeLimit;
 		}
 		cart.setNeedPay(needPay);
-		cart.setTotalPrice(totalPrice.multiply(new BigDecimal(dbMerchant.getDiscount())));
+		cart.setTotalPrice(totalPrice);
+		
 		if (!needPay) {
 			payTimeLimit = 0;
 			// ����Ҫ��ǰ֧��������״̬Ϊ�̼��Զ�ȷ��

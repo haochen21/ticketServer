@@ -214,6 +214,13 @@ public class SecurityController {
 		securityService.updateMerchantOpen(id, open);
 		return true;
 	}
+	
+	@RequestMapping(value = "/merchant/takeOut", method = RequestMethod.POST)
+	public @ResponseBody Boolean modifyMerchantTakeOut(@RequestParam(value = "id", required = true) Long id,
+			@RequestParam(value = "takeOut", required = true) Boolean takeOut) {
+		securityService.updateMerchantTakeOut(id, takeOut);
+		return true;
+	}
 
 	@RequestMapping(value = "/merchant/register", method = RequestMethod.POST)
 	public @ResponseBody Boolean registerMerchant(@RequestParam(value = "id", required = true) Long id,

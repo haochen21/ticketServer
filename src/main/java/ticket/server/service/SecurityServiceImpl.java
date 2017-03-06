@@ -89,7 +89,9 @@ public class SecurityServiceImpl implements SecurityService {
 		dbMerchant.setOpen(merchant.getOpen());
 		dbMerchant.setTakeByPhone(merchant.getTakeByPhone());
 		dbMerchant.setTakeByPhoneSuffix(merchant.getTakeByPhoneSuffix());
+		dbMerchant.setDiscountType(merchant.getDiscountType());
 		dbMerchant.setDiscount(merchant.getDiscount());
+		dbMerchant.setAmount(merchant.getAmount());
 		return merchantRepository.save(dbMerchant);
 	}
 
@@ -102,6 +104,12 @@ public class SecurityServiceImpl implements SecurityService {
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	public void updateMerchantOpen(Long id, Boolean open) {
 		merchantRepository.updateOpen(id, open);
+	}
+	
+	@Override
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	public void updateMerchantTakeOut(Long id, Boolean takeOut) {
+		merchantRepository.updateTakeOut(id, takeOut);
 	}
 
 	@Override
@@ -178,6 +186,7 @@ public class SecurityServiceImpl implements SecurityService {
 		dbCustomer.setPhone(customer.getPhone());
 		dbCustomer.setMail(customer.getMail());
 		dbCustomer.setCardUsed(customer.getCardUsed());
+		dbCustomer.setAddress(customer.getAddress());
 
 		return customerRepository.save(dbCustomer);
 	}

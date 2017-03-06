@@ -50,4 +50,8 @@ public interface MerchantRepository extends BaseRepository<Merchant, Long> {
 	@Modifying
 	@Query(value = "UPDATE Merchant m set m.deviceNo = :deviceNo,m.phone = :phone where m.id = :id")
 	void register(@Param("id") Long id,@Param("deviceNo") String deviceNo,@Param("phone") String phone);
+	
+	@Modifying
+	@Query(value = "UPDATE Merchant m set m.takeOut = :takeOut where m.id = :id")
+	void updateTakeOut(@Param("id") Long id,@Param("takeOut") Boolean takeOut);
 }
