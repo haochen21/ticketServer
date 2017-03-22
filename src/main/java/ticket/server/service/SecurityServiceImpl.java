@@ -180,21 +180,44 @@ public class SecurityServiceImpl implements SecurityService {
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	public Customer updateCustomer(Customer customer) {
 		Customer dbCustomer = customerRepository.findOne(customer.getId());
-
+    
 		dbCustomer.setName(customer.getName());
+		if(customer.getLoginName()!=null){
+			dbCustomer.setLoginName(customer.getLoginName());
+		}
+		if(customer.getCity()!=null){
+			dbCustomer.setCity(customer.getCity());
+		}
+		if(customer.getProvince()!=null){
+			dbCustomer.setProvince(customer.getProvince());
+		}
+		if(customer.getCountry()!=null){
+			dbCustomer.setCountry(customer.getCountry());
+		}
+		if(customer.getHeadImgUrl()!= null){
+			dbCustomer.setHeadImgUrl(customer.getHeadImgUrl());
+		}
 		dbCustomer.setCardNo(customer.getCardNo());
 		dbCustomer.setPhone(customer.getPhone());
 		dbCustomer.setMail(customer.getMail());
 		dbCustomer.setCardUsed(customer.getCardUsed());
 		dbCustomer.setAddress(customer.getAddress());
 
+		dbCustomer.getMerchants().size(); 
+		
 		return customerRepository.save(dbCustomer);
 	}
 
 	@Override
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
-	public void updateCustomerPhone(Long id, String phone) {
-		customerRepository.updatePhone(id, phone);
+	public Boolean updateCustomerPhone(Long id, String phone) {
+		boolean isPhoneExist = customerRepository.existsByPhone(phone);
+		if(isPhoneExist){
+			return false;
+		}else {
+			customerRepository.updatePhone(id, phone);
+		}
+		return true;
 	}
 
 	@Override
@@ -223,6 +246,7 @@ public class SecurityServiceImpl implements SecurityService {
 		String pwd = Password.PASSWORD.MD5(password);
 		Customer customer = customerRepository.findOne(id);
 		customer.setPassword(pwd);
+		customer.getMerchants().size();
 		customerRepository.save(customer);
 	}
 
@@ -345,6 +369,15 @@ public class SecurityServiceImpl implements SecurityService {
 		}
 		customerRepository.save(customer);
 		return customer.getMerchants();
+	}
+
+	@Override
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	public void addMerchantOfCustomer(Long customerId, Long merchantId) {
+		Customer customer = customerRepository.findOne(customerId);
+		customer.getMerchants();
+		Merchant m = merchantRepository.findOne(merchantId);
+		customer.getMerchants().add(m);
 	}
 
 	@Override

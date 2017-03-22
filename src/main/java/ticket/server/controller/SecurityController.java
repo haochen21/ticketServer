@@ -123,7 +123,7 @@ public class SecurityController {
 	public @ResponseBody Boolean existsMerchantByPhone(@PathVariable String phone) {
 		return securityService.existsMerchantByPhone(phone);
 	}
-	
+
 	@RequestMapping(value = "/merchant", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	public Merchant createMerchant(@RequestBody Merchant merchant) {
 		logger.info("register merchant: " + merchant.toString());
@@ -168,8 +168,8 @@ public class SecurityController {
 	@RequestMapping(value = "/customer/modifyPhone", method = RequestMethod.PUT, produces = "application/json")
 	public @ResponseBody Boolean modifyCustomerPhone(@RequestParam(value = "id", required = true) Long id,
 			@RequestParam(value = "phone", required = true) String phone) {
-		securityService.updateCustomerPhone(id, phone);
-		return true;
+		Boolean result = securityService.updateCustomerPhone(id, phone);
+		return result;
 	}
 
 	@RequestMapping(value = "/device", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
@@ -200,7 +200,7 @@ public class SecurityController {
 		securityService.modifyCustomerPassword(id, password);
 		return true;
 	}
-	
+
 	@RequestMapping(value = "/merchant/password", method = RequestMethod.PUT, produces = "application/json")
 	public @ResponseBody Boolean modifyMerchantPassword(@RequestParam(value = "id", required = true) Long id,
 			@RequestParam(value = "password", required = true) String password) {
@@ -214,7 +214,7 @@ public class SecurityController {
 		securityService.updateMerchantOpen(id, open);
 		return true;
 	}
-	
+
 	@RequestMapping(value = "/merchant/takeOut", method = RequestMethod.POST)
 	public @ResponseBody Boolean modifyMerchantTakeOut(@RequestParam(value = "id", required = true) Long id,
 			@RequestParam(value = "takeOut", required = true) Boolean takeOut) {
@@ -257,7 +257,12 @@ public class SecurityController {
 			logger.info("upload file error...", ex);
 			return "";
 		}
+	}
 
+	@RequestMapping(value = "/merchant/wechatQrCode", method = RequestMethod.PUT)
+	public void modifyMerchantWechatQrcode(@RequestParam(value = "id", required = true) Long id,
+			@RequestParam(value = "ticket", required = true) String ticket) {
+		securityService.updateMerchantQrCode(id, ticket);
 	}
 
 	@RequestMapping(value = "/merchant/openRange/{id}", method = RequestMethod.GET, produces = "application/json")
@@ -275,6 +280,12 @@ public class SecurityController {
 	@RequestMapping(value = "/customer/merchant/{customerId}", method = RequestMethod.POST)
 	public Set<Merchant> saveMerchantsOfCustomer(@PathVariable Long customerId, @RequestBody Set<Long> merchantIds) {
 		return securityService.saveMerchantsOfCustomer(customerId, merchantIds);
+	}
+	
+	@RequestMapping(value = "/customer/qrcodeMerchant", method = RequestMethod.PUT)
+	public void addMerchantOfCustomer(@RequestParam(value = "customerId", required = true) Long customerId,
+			@RequestParam(value = "merchantId", required = true) Long merchantId) {
+		securityService.addMerchantOfCustomer(customerId, merchantId);
 	}
 
 	@RequestMapping(value = "/customer/merchant/{customerId}", method = RequestMethod.GET, produces = "application/json")

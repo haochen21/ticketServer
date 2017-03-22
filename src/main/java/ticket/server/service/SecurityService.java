@@ -57,7 +57,7 @@ public interface SecurityService {
 	
 	Customer findCustomerByFullPhone(String phone);
 
-	void updateCustomerPhone(Long id, String phone);
+	Boolean updateCustomerPhone(Long id, String phone);
 
 	MerchantLogin merchantLogin(String loginName, String password);
 
@@ -91,6 +91,8 @@ public interface SecurityService {
 
 	Set<Merchant> findMerchantsOfCustomer(Long customerId);
 
+	void addMerchantOfCustomer(Long customerId,Long merchantId);
+	
 	List<Merchant> findMerchantsByName(String name);
 	
 	List<OpenRange> findOpenRangeByMerchant(Long merchantId);

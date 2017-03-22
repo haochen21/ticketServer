@@ -21,7 +21,6 @@ import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
-import javax.validation.constraints.NotNull;
 
 import ticket.server.model.Constants;
 import ticket.server.model.order.Cart;
@@ -37,19 +36,16 @@ public class Customer implements Serializable {
 	@GeneratedValue(generator = Constants.ID_GENERATOR)
 	protected Long id;
 
-	@NotNull
-	@Column(name = "LOGINNAME", unique = true, nullable = false)
+	@Column(name = "LOGINNAME", unique = true)
 	protected String loginName;
 
 	@Column(name = "OPENID")
 	protected String openId;
 
-	@NotNull
-	@Column(name = "NAME", nullable = false)
+	@Column(name = "NAME")
 	protected String name;
 
-	@NotNull
-	@Column(name = "PSW", nullable = false)
+	@Column(name = "PSW")
 	protected String password;
 
 	@Column(name = "CARDNO", unique = true)
@@ -58,7 +54,7 @@ public class Customer implements Serializable {
 	@Column(name = "CARDUSED")
 	protected Boolean cardUsed = false;
 
-	@Column(name = "PHONE", nullable = false)
+	@Column(name = "PHONE")
 	protected String phone;
 
 	@Column(name = "MAIL")
