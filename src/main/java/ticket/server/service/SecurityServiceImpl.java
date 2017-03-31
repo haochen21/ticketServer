@@ -1,5 +1,7 @@
 package ticket.server.service;
 
+import java.time.LocalTime;
+import java.time.temporal.ChronoField;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -297,6 +299,19 @@ public class SecurityServiceImpl implements SecurityService {
 		openRangeRepository.getEm().clear();
 
 		Merchant dbMerchant = merchantRepository.findWithOpenRange(merchantId);
+		LocalTime zeroTime = LocalTime.now();
+		zeroTime = zeroTime.with(ChronoField.HOUR_OF_DAY,0);
+		zeroTime = zeroTime.with(ChronoField.MINUTE_OF_HOUR,0);
+		zeroTime = zeroTime.with(ChronoField.SECOND_OF_MINUTE,0);
+		zeroTime = zeroTime.with(ChronoField.MILLI_OF_SECOND,0);
+		for(OpenRange op :dbMerchant.getOpenRanges()){
+			if(op.getBeginTime() == null){
+				op.setBeginTime(java.sql.Time.valueOf(zeroTime));
+			}
+			if(op.getEndTime() == null){
+				op.setEndTime(java.sql.Time.valueOf(zeroTime));
+			}
+		}
 		return dbMerchant;
 	}
 
@@ -308,7 +323,21 @@ public class SecurityServiceImpl implements SecurityService {
 
 	@Override
 	public Merchant findMerchantWithOpenRange(Long id) {
-		return merchantRepository.findWithOpenRange(id);
+		Merchant merchant =  merchantRepository.findWithOpenRange(id);
+		LocalTime zeroTime = LocalTime.now();
+		zeroTime = zeroTime.with(ChronoField.HOUR_OF_DAY,0);
+		zeroTime = zeroTime.with(ChronoField.MINUTE_OF_HOUR,0);
+		zeroTime = zeroTime.with(ChronoField.SECOND_OF_MINUTE,0);
+		zeroTime = zeroTime.with(ChronoField.MILLI_OF_SECOND,0);
+		for(OpenRange op :merchant.getOpenRanges()){
+			if(op.getBeginTime() == null){
+				op.setBeginTime(java.sql.Time.valueOf(zeroTime));
+			}
+			if(op.getEndTime() == null){
+				op.setEndTime(java.sql.Time.valueOf(zeroTime));
+			}
+		}
+		return merchant;
 	}
 
 	@Override

@@ -53,6 +53,9 @@ public class Category implements Serializable {
 	@org.hibernate.annotations.CreationTimestamp
 	protected Date updatedOn;
 
+	@Column(name = "SEQUENCE")
+	protected Integer sequence;
+	
 	@NotNull
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "MERCHANT_ID", nullable = false)
@@ -92,6 +95,14 @@ public class Category implements Serializable {
 
 	public void setDescription(String description) {
 		this.description = description;
+	}
+
+	public Integer getSequence() {
+		return sequence;
+	}
+
+	public void setSequence(Integer sequence) {
+		this.sequence = sequence;
 	}
 
 	public Date getCreatedOn() {

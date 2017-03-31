@@ -1,5 +1,7 @@
 package ticket.server.service;
 
+import java.time.LocalTime;
+import java.time.temporal.ChronoField;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -77,12 +79,40 @@ public class StoreServiceImpl implements StoreService {
 
 	@Override
 	public Product findProduct(Long productId) {
-		return productRepository.findOne(productId);
+		Product product = productRepository.findOne(productId);
+		LocalTime zeroTime = LocalTime.now();
+		zeroTime = zeroTime.with(ChronoField.HOUR_OF_DAY,0);
+		zeroTime = zeroTime.with(ChronoField.MINUTE_OF_HOUR,0);
+		zeroTime = zeroTime.with(ChronoField.SECOND_OF_MINUTE,0);
+		zeroTime = zeroTime.with(ChronoField.MILLI_OF_SECOND,0);
+		for(OpenRange op :product.getOpenRanges()){
+			if(op.getBeginTime() == null){
+				op.setBeginTime(java.sql.Time.valueOf(zeroTime));
+			}
+			if(op.getEndTime() == null){
+				op.setEndTime(java.sql.Time.valueOf(zeroTime));
+			}
+		}
+		return product;
 	}
 
 	@Override
 	public Product findWithMerchant(Long id) {
-		return productRepository.findWithMerchant(id);
+		Product product = productRepository.findWithMerchant(id);
+		LocalTime zeroTime = LocalTime.now();
+		zeroTime = zeroTime.with(ChronoField.HOUR_OF_DAY,0);
+		zeroTime = zeroTime.with(ChronoField.MINUTE_OF_HOUR,0);
+		zeroTime = zeroTime.with(ChronoField.SECOND_OF_MINUTE,0);
+		zeroTime = zeroTime.with(ChronoField.MILLI_OF_SECOND,0);
+		for(OpenRange op :product.getOpenRanges()){
+			if(op.getBeginTime() == null){
+				op.setBeginTime(java.sql.Time.valueOf(zeroTime));
+			}
+			if(op.getEndTime() == null){
+				op.setEndTime(java.sql.Time.valueOf(zeroTime));
+			}
+		}
+		return product;
 	}
 
 	@Override
@@ -92,7 +122,24 @@ public class StoreServiceImpl implements StoreService {
 
 	@Override
 	public List<Product> findProductsByMerchant(Long merchantId) {
-		return productRepository.findByMerchantWithCategory(merchantId);
+		List<Product> products = productRepository.findByMerchantWithCategory(merchantId);
+		for(Product product: products){
+			LocalTime zeroTime = LocalTime.now();
+			zeroTime = zeroTime.with(ChronoField.HOUR_OF_DAY,0);
+			zeroTime = zeroTime.with(ChronoField.MINUTE_OF_HOUR,0);
+			zeroTime = zeroTime.with(ChronoField.SECOND_OF_MINUTE,0);
+			zeroTime = zeroTime.with(ChronoField.MILLI_OF_SECOND,0);
+			for(OpenRange op :product.getOpenRanges()){
+				if(op.getBeginTime() == null){
+					op.setBeginTime(java.sql.Time.valueOf(zeroTime));
+				}
+				if(op.getEndTime() == null){
+					op.setEndTime(java.sql.Time.valueOf(zeroTime));
+				}
+			}
+		}
+		
+		return products;
 	}
 
 	@Override
@@ -107,6 +154,7 @@ public class StoreServiceImpl implements StoreService {
 		Category megerCategory = categoryRepository.findOne(category.getId());
 		megerCategory.setName(category.getName());
 		megerCategory.setDescription(category.getDescription());
+		megerCategory.setSequence(category.getSequence());
 		return categoryRepository.save(megerCategory);
 	}
 
