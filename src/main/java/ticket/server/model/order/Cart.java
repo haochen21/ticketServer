@@ -38,9 +38,8 @@ import ticket.server.model.security.Merchant;
 
 @Entity
 @Table(name = "CART", indexes = { @Index(name = "IDX_CART_MERCHANT", columnList = "MERCHANT_ID"),
-		@Index(name = "IDX_CART_CUSTOMER", columnList = "CUSTOMER_ID"),
-		@Index(name = "IDX_CART_NO", columnList = "NO"),
-		@Index(name = "IDX_WEIXIN_TRANSACTIONID", columnList = "TRANSACTIONID")})
+		@Index(name = "IDX_CART_CUSTOMER", columnList = "CUSTOMER_ID"), @Index(name = "IDX_CART_NO", columnList = "NO"),
+		@Index(name = "IDX_WEIXIN_TRANSACTIONID", columnList = "TRANSACTIONID") })
 public class Cart implements Serializable, Delayed {
 
 	@Id
@@ -50,9 +49,18 @@ public class Cart implements Serializable, Delayed {
 	@NotNull
 	@Column(name = "NO", unique = true, nullable = false)
 	protected String no;
-	
+
 	@Column(name = "TRANSACTIONID")
 	protected String transactionId;
+
+	@Column(name = "NAME")
+	protected String name;
+
+	@Column(name = "PHONE")
+	protected String phone;
+
+	@Column(name = "ADDRESS")
+	protected String address;
 
 	@NotNull
 	@ManyToOne(fetch = FetchType.LAZY)
@@ -78,29 +86,20 @@ public class Cart implements Serializable, Delayed {
 	@Column(name = "TOTALPRICE")
 	protected BigDecimal totalPrice;
 
-	@NotNull
 	@Column(name = "PAYTIMELIMT")
 	protected Integer payTimeLimit;
 
-	@NotNull
 	@Temporal(TemporalType.TIMESTAMP)
 	@Column(name = "PAYTIME")
 	protected Date payTime;
 
-	/**
-	 * �����Ʒ����Ҫ֧��������ʱ��󶩵�ȡ��
-	 */
-	@NotNull
 	@Column(name = "TAKETIMELIMT")
 	protected Integer takeTimeLimit;
 
-	//�û�������ȡ��ʱ��
-	@NotNull
 	@Temporal(TemporalType.TIMESTAMP)
 	@Column(name = "TAKETIME")
 	protected Date takeTime;
 
-	@NotNull
 	@Temporal(TemporalType.TIMESTAMP)
 	@Column(name = "TAKEBEGINTIME")
 	protected Date takeBeginTime;
@@ -121,7 +120,11 @@ public class Cart implements Serializable, Delayed {
 	@Column(name = "REMARK")
 	@Size(min = 0, max = 255)
 	protected String remark;
-	
+
+	// 外卖
+	@Column(name = "TAKEOUT")
+	protected Boolean takeOut;
+
 	@OneToMany(mappedBy = "cart", cascade = { CascadeType.PERSIST, CascadeType.REFRESH,
 			CascadeType.REMOVE }, orphanRemoval = true)
 	@JsonManagedReference
@@ -132,11 +135,11 @@ public class Cart implements Serializable, Delayed {
 
 	@Transient
 	@JsonSerialize
-	protected Boolean cardUsed = true;	
-	
+	protected Boolean cardUsed = true;
+
 	@Transient
 	protected int payingNumber = 0;
-	
+
 	@Transient
 	protected long triggerTime;
 
@@ -160,6 +163,30 @@ public class Cart implements Serializable, Delayed {
 
 	public void setNo(String no) {
 		this.no = no;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public String getPhone() {
+		return phone;
+	}
+
+	public void setPhone(String phone) {
+		this.phone = phone;
+	}
+
+	public String getAddress() {
+		return address;
+	}
+
+	public void setAddress(String address) {
+		this.address = address;
 	}
 
 	public String getTransactionId() {
@@ -304,6 +331,14 @@ public class Cart implements Serializable, Delayed {
 
 	public void setPayingNumber(int payingNumber) {
 		this.payingNumber = payingNumber;
+	}
+
+	public Boolean getTakeOut() {
+		return takeOut;
+	}
+
+	public void setTakeOut(Boolean takeOut) {
+		this.takeOut = takeOut;
 	}
 
 	@Override

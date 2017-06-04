@@ -27,17 +27,21 @@ public interface SecurityService {
 
 	Merchant findMerchant(Long merchantId);
 
+	Merchant findMerchantWithIntroduce(Long merchantId);
+
 	Merchant findMerchantWithOpenRange(Long id);
 
 	Merchant findMerchantByDeviceNo(String deviceNo);
 
 	void updateMerchantOpen(Long id, Boolean open);
-	
+
 	void updateMerchantTakeOut(Long id, Boolean takeOut);
 
 	void updateMerchantImageSource(Long id, String imageSource);
 
 	void updateMerchantQrCode(Long id, String qrCode);
+
+	void updateMerchantIntroduce(Long id, String introduce);
 
 	void registerMerchant(Long id, String deviceNo, String phone);
 
@@ -54,7 +58,7 @@ public interface SecurityService {
 	Customer findCustomerByCardNo(String cardNo);
 
 	List<Customer> findCustomerByPhone(String phone);
-	
+
 	Customer findCustomerByFullPhone(String phone);
 
 	Boolean updateCustomerPhone(Long id, String phone);
@@ -91,9 +95,9 @@ public interface SecurityService {
 
 	Set<Merchant> findMerchantsOfCustomer(Long customerId);
 
-	void addMerchantOfCustomer(Long customerId,Long merchantId);
-	
+	void addMerchantOfCustomer(Long customerId, Long merchantId);
+
 	List<Merchant> findMerchantsByName(String name);
-	
+
 	List<OpenRange> findOpenRangeByMerchant(Long merchantId);
 }

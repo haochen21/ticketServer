@@ -20,8 +20,11 @@ import junit.framework.TestCase;
 import ticket.server.config.HibernateJpaConfig;
 import ticket.server.config.JmsConfig;
 import ticket.server.config.ServiceConfig;
+import ticket.server.model.security.Customer;
 import ticket.server.model.security.Merchant;
+import ticket.server.model.security.NickNameEnCode;
 import ticket.server.model.security.OpenRange;
+import ticket.server.repository.security.CustomerRepository;
 import ticket.server.service.SecurityService;
 
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -30,6 +33,10 @@ public class SecurityServiceTest {
 
 	@Autowired
 	SecurityService securityService;
+	
+	@Autowired
+	CustomerRepository customerRepository;
+
 
 	// @Test
 	public void existsDeviceByNo() {
@@ -81,7 +88,7 @@ public class SecurityServiceTest {
 		TestCase.assertEquals(m.getOpenRanges().size(), 2);
 	}
 
-	@Test
+	//@Test
 	public void setMerchantsOfCustomer() {
 		Set<Long> merchantIds = new HashSet<>();
 		merchantIds.add(new Long(6));
@@ -89,5 +96,22 @@ public class SecurityServiceTest {
 		securityService.saveMerchantsOfCustomer(new Long(1), merchantIds);
 		Set<Merchant> ms = securityService.findMerchantsOfCustomer(new Long(1));
 		TestCase.assertEquals(ms.size(), 2);
+	}
+	
+	@Test
+	public void updateCustomerByNickName() {
+//		List<Customer> customers = customerRepository.findAll();
+//	    customers.stream().forEach(customer -> {
+//	    	if(customer.getName()!= null && !customer.getLoginName().equals("") && !customer.getLoginName().equals("5Zut8J+OryDogJXlpLTwn463")){
+//	    		//String name = NickNameEnCode.INSTANCE.decode(customer.getName());
+//	    		String nickName = NickNameEnCode.INSTANCE.encode(customer.getLoginName());
+//				customer.setName(nickName);
+//				customer.setLoginName(nickName);
+//	    	   securityService.updateCustomer(customer);
+//	    	}
+//	    });
+		Customer customer = securityService.findCustomer(new Long(6362));
+		String name = NickNameEnCode.INSTANCE.decode(customer.getName());
+		System.out.println(name);
 	}
 }

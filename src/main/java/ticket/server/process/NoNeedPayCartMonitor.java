@@ -87,17 +87,20 @@ public class NoNeedPayCartMonitor {
 	}
 
 	public void addCartToQueue(Cart cart) {
-		Instant now = Instant.now();
-		long delay = 0;
-		if (now.isAfter(cart.getTakeEndTime().toInstant())) {
-			delay = 0;
-		} else {
-			delay = Duration.between(now, cart.getTakeEndTime().toInstant()).toMillis();
-		}
-		cart.setDelayTime(delay);
-		cartQueue.put(cart);
-		logger.info("add cart to process queue," + cart.toString() + ",delay millseconds is: " + delay
-				+ ",queue size is:" + cartQueue.size());
+		if(!cart.getTakeOut()){
+			//只针对到店付
+			Instant now = Instant.now();
+			long delay = 0;
+			if (now.isAfter(cart.getTakeEndTime().toInstant())) {
+				delay = 0;
+			} else {
+				delay = Duration.between(now, cart.getTakeEndTime().toInstant()).toMillis();
+			}
+			cart.setDelayTime(delay);
+			cartQueue.put(cart);
+			logger.info("add cart to process queue," + cart.toString() + ",delay millseconds is: " + delay
+					+ ",queue size is:" + cartQueue.size());
+		}	
 	}
 
 	public void removeCartInQueue(Cart cart) {

@@ -54,4 +54,7 @@ public interface MerchantRepository extends BaseRepository<Merchant, Long> {
 	@Modifying
 	@Query(value = "UPDATE Merchant m set m.takeOut = :takeOut where m.id = :id")
 	void updateTakeOut(@Param("id") Long id,@Param("takeOut") Boolean takeOut);
+	
+	@Query(value = "select m from Merchant m LEFT JOIN FETCH m.introduce where m.id = :id")
+	Merchant findWithIntroduce(@Param("id") Long id);
 }

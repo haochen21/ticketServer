@@ -19,7 +19,9 @@ import ticket.server.model.security.CustomerLogin;
 import ticket.server.model.security.Device;
 import ticket.server.model.security.LoginResult;
 import ticket.server.model.security.Merchant;
+import ticket.server.model.security.MerchantIntro;
 import ticket.server.model.security.MerchantLogin;
+import ticket.server.model.security.NickNameEnCode;
 import ticket.server.model.security.OpenRange;
 import ticket.server.model.security.Password;
 import ticket.server.model.store.Product;
@@ -103,11 +105,17 @@ public class SecurityServiceImpl implements SecurityService {
 	}
 
 	@Override
+	public Merchant findMerchantWithIntroduce(Long merchantId) {
+		Merchant merchant = merchantRepository.findWithIntroduce(merchantId);
+		return merchant;
+	}
+
+	@Override
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	public void updateMerchantOpen(Long id, Boolean open) {
 		merchantRepository.updateOpen(id, open);
 	}
-	
+
 	@Override
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	public void updateMerchantTakeOut(Long id, Boolean takeOut) {
@@ -118,6 +126,20 @@ public class SecurityServiceImpl implements SecurityService {
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	public void updateMerchantQrCode(Long id, String qrCode) {
 		merchantRepository.updateQrCode(id, qrCode);
+	}
+
+	@Override
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	public void updateMerchantIntroduce(Long id, String introduce) {
+		Merchant merchant = merchantRepository.findOne(id);
+		MerchantIntro merchantIntro = merchant.getIntroduce();
+		if (merchantIntro == null) {
+			merchantIntro = new MerchantIntro();
+			merchantIntro.setIntroduce(introduce);
+			merchant.setIntroduce(merchantIntro);
+		} else {
+			merchantIntro.setIntroduce(introduce);
+		}
 	}
 
 	@Override
@@ -134,7 +156,9 @@ public class SecurityServiceImpl implements SecurityService {
 	@Override
 	public CustomerLogin customerLogin(String loginName, String password) {
 		CustomerLogin login = new CustomerLogin();
-		Customer customer = customerRepository.findByLoginName(loginName);
+		String encodeLoginName = NickNameEnCode.INSTANCE.encode(loginName);
+		Customer customer = customerRepository.findByLoginName(encodeLoginName);
+
 		if (customer == null) {
 			login.setResult(LoginResult.LOGINNAMEERROR);
 		} else {
@@ -182,21 +206,21 @@ public class SecurityServiceImpl implements SecurityService {
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	public Customer updateCustomer(Customer customer) {
 		Customer dbCustomer = customerRepository.findOne(customer.getId());
-    
+
 		dbCustomer.setName(customer.getName());
-		if(customer.getLoginName()!=null){
+		if (customer.getLoginName() != null) {
 			dbCustomer.setLoginName(customer.getLoginName());
 		}
-		if(customer.getCity()!=null){
+		if (customer.getCity() != null) {
 			dbCustomer.setCity(customer.getCity());
 		}
-		if(customer.getProvince()!=null){
+		if (customer.getProvince() != null) {
 			dbCustomer.setProvince(customer.getProvince());
 		}
-		if(customer.getCountry()!=null){
+		if (customer.getCountry() != null) {
 			dbCustomer.setCountry(customer.getCountry());
 		}
-		if(customer.getHeadImgUrl()!= null){
+		if (customer.getHeadImgUrl() != null) {
 			dbCustomer.setHeadImgUrl(customer.getHeadImgUrl());
 		}
 		dbCustomer.setCardNo(customer.getCardNo());
@@ -205,8 +229,8 @@ public class SecurityServiceImpl implements SecurityService {
 		dbCustomer.setCardUsed(customer.getCardUsed());
 		dbCustomer.setAddress(customer.getAddress());
 
-		dbCustomer.getMerchants().size(); 
-		
+		dbCustomer.getMerchants().size();
+
 		return customerRepository.save(dbCustomer);
 	}
 
@@ -214,9 +238,9 @@ public class SecurityServiceImpl implements SecurityService {
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	public Boolean updateCustomerPhone(Long id, String phone) {
 		boolean isPhoneExist = customerRepository.existsByPhone(phone);
-		if(isPhoneExist){
+		if (isPhoneExist) {
 			return false;
-		}else {
+		} else {
 			customerRepository.updatePhone(id, phone);
 		}
 		return true;
@@ -300,15 +324,15 @@ public class SecurityServiceImpl implements SecurityService {
 
 		Merchant dbMerchant = merchantRepository.findWithOpenRange(merchantId);
 		LocalTime zeroTime = LocalTime.now();
-		zeroTime = zeroTime.with(ChronoField.HOUR_OF_DAY,0);
-		zeroTime = zeroTime.with(ChronoField.MINUTE_OF_HOUR,0);
-		zeroTime = zeroTime.with(ChronoField.SECOND_OF_MINUTE,0);
-		zeroTime = zeroTime.with(ChronoField.MILLI_OF_SECOND,0);
-		for(OpenRange op :dbMerchant.getOpenRanges()){
-			if(op.getBeginTime() == null){
+		zeroTime = zeroTime.with(ChronoField.HOUR_OF_DAY, 0);
+		zeroTime = zeroTime.with(ChronoField.MINUTE_OF_HOUR, 0);
+		zeroTime = zeroTime.with(ChronoField.SECOND_OF_MINUTE, 0);
+		zeroTime = zeroTime.with(ChronoField.MILLI_OF_SECOND, 0);
+		for (OpenRange op : dbMerchant.getOpenRanges()) {
+			if (op.getBeginTime() == null) {
 				op.setBeginTime(java.sql.Time.valueOf(zeroTime));
 			}
-			if(op.getEndTime() == null){
+			if (op.getEndTime() == null) {
 				op.setEndTime(java.sql.Time.valueOf(zeroTime));
 			}
 		}
@@ -323,17 +347,17 @@ public class SecurityServiceImpl implements SecurityService {
 
 	@Override
 	public Merchant findMerchantWithOpenRange(Long id) {
-		Merchant merchant =  merchantRepository.findWithOpenRange(id);
+		Merchant merchant = merchantRepository.findWithOpenRange(id);
 		LocalTime zeroTime = LocalTime.now();
-		zeroTime = zeroTime.with(ChronoField.HOUR_OF_DAY,0);
-		zeroTime = zeroTime.with(ChronoField.MINUTE_OF_HOUR,0);
-		zeroTime = zeroTime.with(ChronoField.SECOND_OF_MINUTE,0);
-		zeroTime = zeroTime.with(ChronoField.MILLI_OF_SECOND,0);
-		for(OpenRange op :merchant.getOpenRanges()){
-			if(op.getBeginTime() == null){
+		zeroTime = zeroTime.with(ChronoField.HOUR_OF_DAY, 0);
+		zeroTime = zeroTime.with(ChronoField.MINUTE_OF_HOUR, 0);
+		zeroTime = zeroTime.with(ChronoField.SECOND_OF_MINUTE, 0);
+		zeroTime = zeroTime.with(ChronoField.MILLI_OF_SECOND, 0);
+		for (OpenRange op : merchant.getOpenRanges()) {
+			if (op.getBeginTime() == null) {
 				op.setBeginTime(java.sql.Time.valueOf(zeroTime));
 			}
-			if(op.getEndTime() == null){
+			if (op.getEndTime() == null) {
 				op.setEndTime(java.sql.Time.valueOf(zeroTime));
 			}
 		}

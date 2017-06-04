@@ -22,6 +22,8 @@ import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+
 import ticket.server.model.Constants;
 import ticket.server.model.order.Cart;
 
@@ -37,12 +39,14 @@ public class Customer implements Serializable {
 	protected Long id;
 
 	@Column(name = "LOGINNAME", unique = true)
+	@JsonSerialize(using = NameDecodeSerializer.class, as=String.class)
 	protected String loginName;
 
 	@Column(name = "OPENID")
 	protected String openId;
 
 	@Column(name = "NAME")
+	@JsonSerialize(using = NameDecodeSerializer.class, as=String.class)
 	protected String name;
 
 	@Column(name = "PSW")

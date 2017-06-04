@@ -42,6 +42,7 @@ import ticket.server.model.security.CustomerLogin;
 import ticket.server.model.security.Device;
 import ticket.server.model.security.Merchant;
 import ticket.server.model.security.MerchantLogin;
+import ticket.server.model.security.NickNameEnCode;
 import ticket.server.model.security.OpenRange;
 import ticket.server.service.SecurityService;
 
@@ -113,6 +114,12 @@ public class SecurityController {
 		Merchant merchant = securityService.findMerchant(id);
 		return merchant;
 	}
+	
+	@RequestMapping(value = "/merchant/introduce/{id}", method = RequestMethod.GET, produces = "application/json")
+	public Merchant findMerchantWithIntroduceById(@PathVariable Long id) {
+		Merchant merchant = securityService.findMerchantWithIntroduce(id);
+		return merchant;
+	}
 
 	@RequestMapping(value = "/customer/phone/{phone}", method = RequestMethod.GET)
 	public @ResponseBody Boolean existsCustomerByPhone(@PathVariable String phone) {
@@ -153,6 +160,11 @@ public class SecurityController {
 
 	@RequestMapping(value = "/customer", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	public Customer createCustomer(@RequestBody Customer customer) {
+		if (customer.getName() != null && !customer.getName().equals("")) {
+			String nickName = NickNameEnCode.INSTANCE.encode(customer.getName());
+			customer.setName(nickName);
+			customer.setLoginName(nickName);
+		}
 		logger.info("register customer: " + customer.toString());
 		Customer dbCustomer = securityService.saveCustomer(customer);
 		return dbCustomer;
@@ -160,7 +172,14 @@ public class SecurityController {
 
 	@RequestMapping(value = "/customer", method = RequestMethod.PUT, consumes = "application/json", produces = "application/json")
 	public Customer modifyCustomer(@RequestBody Customer customer) {
+		if (customer.getName() != null && !customer.getName().equals("")) {
+			String nickName = NickNameEnCode.INSTANCE.encode(customer.getName());
+			customer.setName(nickName);
+			customer.setLoginName(nickName);
+		}
+
 		logger.info("modify customer: " + customer.toString());
+
 		Customer dbCustomer = securityService.updateCustomer(customer);
 		return dbCustomer;
 	}
@@ -219,6 +238,13 @@ public class SecurityController {
 	public @ResponseBody Boolean modifyMerchantTakeOut(@RequestParam(value = "id", required = true) Long id,
 			@RequestParam(value = "takeOut", required = true) Boolean takeOut) {
 		securityService.updateMerchantTakeOut(id, takeOut);
+		return true;
+	}
+	
+	@RequestMapping(value = "/merchant/introduce", method = RequestMethod.PUT)
+	public @ResponseBody Boolean modifyMerchantIntroduce(@RequestParam(value = "id", required = true) Long id,
+			@RequestParam(value = "introduce", required = true) String introduce) {
+		securityService.updateMerchantIntroduce(id, introduce);
 		return true;
 	}
 
@@ -281,7 +307,7 @@ public class SecurityController {
 	public Set<Merchant> saveMerchantsOfCustomer(@PathVariable Long customerId, @RequestBody Set<Long> merchantIds) {
 		return securityService.saveMerchantsOfCustomer(customerId, merchantIds);
 	}
-	
+
 	@RequestMapping(value = "/customer/qrcodeMerchant", method = RequestMethod.PUT)
 	public void addMerchantOfCustomer(@RequestParam(value = "customerId", required = true) Long customerId,
 			@RequestParam(value = "merchantId", required = true) Long merchantId) {

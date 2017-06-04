@@ -114,7 +114,7 @@ public class OrderController {
 				Cart dbCart = orderService.purchaseCart(cart);
 
 				sendCartJsonExecutor.addCartToQueue(cart);
-
+				
 				process = false;
 				result.setResult(true);
 				result.setError("");
@@ -140,6 +140,9 @@ public class OrderController {
 				result.setError("商家商品折扣已经改变");
 				process = false;
 			} catch (JpaOptimisticLockingFailureException ex) {
+				logger.info("purchase order fail...", ex);
+				process = true;
+			}catch (Exception ex) {
 				logger.info("purchase order fail...", ex);
 				process = true;
 			}
@@ -359,6 +362,32 @@ public class OrderController {
 				carts.add(cart);
 				page = new PageImpl<>(carts, new PageRequest(0, 1), 0);
 			}
+		}
+		return page;
+	}
+	
+	/**
+	 * app测试使用
+	 * @param cartId
+	 * @return
+	 */
+	@RequestMapping(value = "/cart/device/takeById", method = RequestMethod.POST, produces = "application/json")
+	public Page<Cart> takeCartById(@RequestParam(value = "cartId", required = true) Long cartId) {
+		
+		CartFilter filter = new CartFilter();
+		filter.setCartId(cartId);
+
+		Page<Cart> page = orderService.pageCartByFilter(filter, null);
+		if (page.getContent().size() > 0) {
+			for (Cart cart : page.getContent()) {
+				cart.getCustomer().setCardUsed(true);
+			}
+		} else {
+			Cart cart = new Cart();
+			cart.setCardUsed(true);
+			List<Cart> carts = new ArrayList<Cart>();
+			carts.add(cart);
+			page = new PageImpl<>(carts, new PageRequest(0, 1), 0);
 		}
 		return page;
 	}

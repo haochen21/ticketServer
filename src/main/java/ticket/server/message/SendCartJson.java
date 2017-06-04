@@ -54,7 +54,7 @@ public class SendCartJson {
 					TextMessage message = session.createTextMessage(cartJson);
 					return message;
 				} catch (Exception ex) {
-					logger.info("parse alarm json fail!", ex);
+					logger.info("parse cart json fail!", ex);
 				}
 				return null;
 			}

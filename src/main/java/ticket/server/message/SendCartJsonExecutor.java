@@ -12,12 +12,15 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import ticket.server.model.order.Cart;
+import ticket.server.model.order.CartStatus;
 
 @Component
 public class SendCartJsonExecutor {
 
 	private SendCartJson sendCartJson;
 
+	private SendCartKafka sendCartKafka;
+	
 	private BlockingQueue<Cart> cartQueue;
 
 	private ExecutorService executor;
@@ -38,6 +41,14 @@ public class SendCartJsonExecutor {
 		this.sendCartJson = sendCartJson;
 	}
 
+	public SendCartKafka getSendCartKafka() {
+		return sendCartKafka;
+	}
+
+	public void setSendCartKafka(SendCartKafka sendCartKafka) {
+		this.sendCartKafka = sendCartKafka;
+	}
+
 	@PostConstruct
 	public void start() {
 		cartQueue = new LinkedBlockingDeque<>();
@@ -55,6 +66,9 @@ public class SendCartJsonExecutor {
 						try {
 							Cart cart = cartQueue.take();
 							sendCartJson.sendingCart(cart);
+							if(cart.getStatus() == CartStatus.CONFIRMED){
+								sendCartKafka.send(cart);
+							}
 						} catch (Exception ex) {
 							logger.info("cart jms error", ex);
 						}

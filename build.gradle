@@ -41,6 +41,10 @@ dependencies {
     
     compile 'com.google.zxing:javase:3.2.1'
     
+    compile 'javax.el:javax.el-api:2.2.4'
+    
+    compile 'org.apache.kafka:kafka-clients:0.10.2.1'
+    
     testCompile 'junit:junit:4.12'
     testCompile 'org.springframework:spring-test:4.3.0.RELEASE'
 }

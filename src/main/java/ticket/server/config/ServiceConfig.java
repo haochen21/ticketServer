@@ -9,6 +9,7 @@ import org.springframework.core.env.Environment;
 
 import ticket.server.message.SendCartJson;
 import ticket.server.message.SendCartJsonExecutor;
+import ticket.server.message.SendCartKafka;
 import ticket.server.process.NeedPayCarMonitor;
 import ticket.server.process.NoNeedPayCartMonitor;
 
@@ -22,6 +23,9 @@ public class ServiceConfig {
 	
 	@Autowired
 	private SendCartJson sendCartJson;
+	
+	@Autowired
+	SendCartKafka sendCartKafka;
 	
 	@Bean
 	public NeedPayCarMonitor createNeedPayCarMonitor() {
@@ -41,6 +45,13 @@ public class ServiceConfig {
 	public SendCartJsonExecutor createSendCartJsonExecutor() {
 		SendCartJsonExecutor executor = new SendCartJsonExecutor();
 		executor.setSendCartJson(sendCartJson);
+		executor.setSendCartKafka(sendCartKafka);
 		return executor;
+	}
+	
+	@Bean
+	public SendCartKafka createSendCartKafka() {
+		SendCartKafka sendCartKafka = new SendCartKafka();
+		return sendCartKafka;
 	}
 }

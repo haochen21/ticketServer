@@ -10,10 +10,12 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Index;
 import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
@@ -106,6 +108,10 @@ public class Merchant implements Serializable {
 	@Column(name = "QRCODE")
 	@Size(min = 0, max = 255)
 	protected String qrCode;
+	
+	@Column(name = "PRINTNO")
+	@Size(min = 0, max = 255)
+	protected String printNo;
 
 	@Enumerated(EnumType.STRING)
 	@Column(name = "DISCOUNTTYPE")
@@ -136,6 +142,9 @@ public class Merchant implements Serializable {
 	@OneToMany(mappedBy = "merchant", cascade = { CascadeType.PERSIST, CascadeType.REFRESH }, orphanRemoval = true)
 	@JsonManagedReference
 	protected Collection<OpenRange> openRanges = new ArrayList<OpenRange>();
+
+	@OneToOne(fetch = FetchType.LAZY, optional = true, cascade = { CascadeType.PERSIST, CascadeType.REMOVE })
+	protected MerchantIntro introduce;
 
 	private static final long serialVersionUID = -1573726069064463313L;
 
@@ -341,6 +350,22 @@ public class Merchant implements Serializable {
 
 	public void setAmount(Float amount) {
 		this.amount = amount;
+	}
+
+	public String getPrintNo() {
+		return printNo;
+	}
+
+	public void setPrintNo(String printNo) {
+		this.printNo = printNo;
+	}
+
+	public MerchantIntro getIntroduce() {
+		return introduce;
+	}
+
+	public void setIntroduce(MerchantIntro introduce) {
+		this.introduce = introduce;
 	}
 
 	public Collection<Category> getCategorys() {

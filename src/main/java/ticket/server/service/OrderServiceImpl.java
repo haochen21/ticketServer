@@ -36,6 +36,7 @@ import ticket.server.model.order.CartItem;
 import ticket.server.model.order.CartProductStat;
 import ticket.server.model.order.CartStatus;
 import ticket.server.model.order.CartStatusStat;
+import ticket.server.model.security.Customer;
 import ticket.server.model.security.DiscountType;
 import ticket.server.model.security.Merchant;
 import ticket.server.model.store.Product;
@@ -44,6 +45,7 @@ import ticket.server.process.NeedPayCarMonitor;
 import ticket.server.process.NoNeedPayCartMonitor;
 import ticket.server.repository.order.CartItemRepository;
 import ticket.server.repository.order.CartRepository;
+import ticket.server.repository.security.CustomerRepository;
 import ticket.server.repository.security.MerchantRepository;
 import ticket.server.repository.store.ProductRepository;
 
@@ -53,6 +55,9 @@ public class OrderServiceImpl implements OrderService {
 
 	@Autowired
 	MerchantRepository merchantRepository;
+	
+	@Autowired
+	CustomerRepository customerRepository;
 
 	@Autowired
 	ProductRepository productRepository;
@@ -68,7 +73,7 @@ public class OrderServiceImpl implements OrderService {
 
 	@Autowired
 	NoNeedPayCartMonitor noNeedPayCartMonitor;
-
+	
 	private final static Logger logger = LoggerFactory.getLogger(OrderServiceImpl.class);
 
 	@Override
@@ -95,6 +100,9 @@ public class OrderServiceImpl implements OrderService {
 			throw new MerchantDiscountException(dbMerchant, cart.getMerchant().getDiscount());
 		}
 
+		Customer dbCustomer = customerRepository.findOne(cart.getCustomer().getId());
+		cart.setCustomer(dbCustomer);
+		
 		boolean needPay = false;
 		int payTimeLimit = Integer.MAX_VALUE;
 		int takeTimeLimit = Integer.MIN_VALUE;
@@ -124,19 +132,17 @@ public class OrderServiceImpl implements OrderService {
 			}
 			cartItem.setTotalPrice(cartItem.getUnitPrice().multiply(new BigDecimal(cartItem.getQuantity())));
 			
-			// ��Ʒ���ߣ��׳��쳣
 			if (product.getStatus() == ProductStatus.OFFLINE) {
 				logger.info("product id: " + product.getId() + " is offline");
 				throw new BuyEmptyProductException();
 			}
-			// ��Ʒ�����޵ģ���Ʒ�������ڹ����������׳��쳣
 			if (!product.getInfinite() && product.getUnitsInStock() < cartItem.getQuantity()) {
 				logger.info("product id: " + product.getId() + " ,in stock is: " + product.getUnitsInStock()
 						+ ", order number is: " + cartItem.getQuantity());
 				throw new BuyEmptyProductException();
 			}
 			totalPrice = totalPrice.add(cartItem.getTotalPrice());
-			// ��Ʒ�������ޣ�������������
+			
 			if (!product.getInfinite()) {
 				product.setUnitsInStock(product.getUnitsInStock() - cartItem.getQuantity());
 			}
@@ -153,7 +159,6 @@ public class OrderServiceImpl implements OrderService {
 		
 		if (!needPay) {
 			payTimeLimit = 0;
-			// ����Ҫ��ǰ֧��������״̬Ϊ�̼��Զ�ȷ��
 			cart.setStatus(CartStatus.CONFIRMED);
 		} else {
 			cart.setStatus(CartStatus.PURCHASED);
@@ -169,7 +174,7 @@ public class OrderServiceImpl implements OrderService {
 		Instant takeTime = now.plus(takeTimeLimit, ChronoUnit.MINUTES);
 		cart.setTakeTime(Date.from(takeTime));
 
-		if (cart.getTakeBeginTime().before(Date.from(now)) && cart.getTakeEndTime().after(Date.from(now))) {
+		if (cart.getTakeBeginTime()!= null && cart.getTakeBeginTime().before(Date.from(now)) && cart.getTakeEndTime().after(Date.from(now))) {
 			if (!userCurrentOpenTime) {
 				logger.info("take time is not in current open time");
 				throw new TakeTimeException(cart.getTakeTime(), cart.getTakeBeginTime());
@@ -253,7 +258,6 @@ public class OrderServiceImpl implements OrderService {
 			throw new CartStatusException(cart);
 		}
 		cart.setStatus(CartStatus.DELIVERED);
-		// ��ȡ�������飬�޸Ķ�Ӧ��Ʒ�ĵ�ǰ������
 		cart.getCartItems().size();
 		for (CartItem cartItem : cart.getCartItems()) {
 			Product product = productRepository.findOne(cartItem.getProduct().getId());
@@ -261,7 +265,6 @@ public class OrderServiceImpl implements OrderService {
 		}
 		cart = cartRepository.saveAndFlush(cart);
 		if (!cart.getNeedPay()) {
-			// ����Ҫ��ǰ֧���Ķ��������ָ��ʱ����ȡ�����Ӷ�������ϵͳ��ɾ��
 			noNeedPayCartMonitor.removeCartInQueue(cart);
 		}
 		logger.info("delivered cart: " + cart.toString());
@@ -271,8 +274,6 @@ public class OrderServiceImpl implements OrderService {
 	@Override
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED, rollbackFor = CartStatusException.class)
 	public Cart cancelCart(Long cartId) throws CartStatusException {
-		// ������Ϊû�м�ʱ֧������û�а�ʱȡ��Ʒ����������(OrderProcess.java)ȡ��
-		// ����ƷԤ���������ظ���Ʒ
 		Cart cart = cartRepository.findOne(cartId);
 
 		if (cart.getNeedPay() && (cart.getStatus() != CartStatus.PURCHASED && cart.getStatus() != CartStatus.PAYING)) {
@@ -283,7 +284,6 @@ public class OrderServiceImpl implements OrderService {
 		}
 
 		cart.setStatus(CartStatus.CANCELLED);
-		// ��ȡ�������飬�޸Ķ�Ӧ��Ʒ�ĵ�ǰ������
 		cart.getCartItems().size();
 		for (CartItem cartItem : cart.getCartItems()) {
 			Product product = productRepository.findOne(cartItem.getProduct().getId());
