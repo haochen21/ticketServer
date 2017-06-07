@@ -32,19 +32,21 @@ public class SendCartKafka {
 		try {
 			Cart jsonCart = orderService.findWithJsonData(cart.getId());
 
+			ObjectMapper mapper = new ObjectMapper();
+			Hibernate5Module model = new Hibernate5Module();
+			model.disable(Hibernate5Module.Feature.USE_TRANSIENT_ANNOTATION);
+			mapper.registerModule(model);
+			String cartJson = mapper.writeValueAsString(jsonCart);
+
+			String topic = "order";
+			ProducerRecord<String, String> record = new ProducerRecord<>(topic, cartJson);
+			kafkaProducer.send(record);
+
 			if (jsonCart.getMerchant().getPrintNo() != null && !jsonCart.getMerchant().getPrintNo().equals("")) {
-				String topic = jsonCart.getMerchant().getPrintNo();
-
-				ObjectMapper mapper = new ObjectMapper();
-				Hibernate5Module model = new Hibernate5Module();
-				model.disable(Hibernate5Module.Feature.USE_TRANSIENT_ANNOTATION);
-				mapper.registerModule(model);
-				String cartJson = mapper.writeValueAsString(jsonCart);
-
-				ProducerRecord<String, String> record = new ProducerRecord<>(topic, cartJson);
-				kafkaProducer.send(record);
+				String printTopic = "print-" + jsonCart.getMerchant().getPrintNo();
+				ProducerRecord<String, String> printRecord = new ProducerRecord<>(printTopic, cartJson);
+				kafkaProducer.send(printRecord);
 			}
-
 		} catch (Exception ex) {
 			logger.info("kafka cart json fail!", ex);
 		}

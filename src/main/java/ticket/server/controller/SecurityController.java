@@ -108,6 +108,12 @@ public class SecurityController {
 		Customer customer = securityService.findCustomer(id);
 		return customer;
 	}
+	
+	@RequestMapping(value = "/customer/orderAddress/id/{id}", method = RequestMethod.GET, produces = "application/json")
+	public Customer findCustomerByIdWithOrderAddress(@PathVariable Long id) {
+		Customer customer = securityService.findCustomerWithOrderAddress(id);
+		return customer;
+	}
 
 	@RequestMapping(value = "/merchant/{id}", method = RequestMethod.GET, produces = "application/json")
 	public Merchant findMerchantById(@PathVariable Long id) {

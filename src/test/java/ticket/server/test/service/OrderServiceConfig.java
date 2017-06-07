@@ -6,12 +6,11 @@ import org.springframework.context.annotation.Import;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 import ticket.server.config.HibernateJpaConfig;
-import ticket.server.config.JmsConfig;
 import ticket.server.config.ServiceConfig;
 
 @Configuration
 @EnableScheduling
-@Import({ HibernateJpaConfig.class, JmsConfig.class, ServiceConfig.class })
+@Import({ HibernateJpaConfig.class, ServiceConfig.class })
 public class OrderServiceConfig {
 
 	public OrderServiceConfig() {

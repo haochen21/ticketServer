@@ -7,7 +7,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.env.Environment;
 
-import ticket.server.message.SendCartJson;
 import ticket.server.message.SendCartJsonExecutor;
 import ticket.server.message.SendCartKafka;
 import ticket.server.process.NeedPayCarMonitor;
@@ -20,9 +19,6 @@ public class ServiceConfig {
 
 	@Autowired
 	private Environment env;
-	
-	@Autowired
-	private SendCartJson sendCartJson;
 	
 	@Autowired
 	SendCartKafka sendCartKafka;
@@ -44,7 +40,6 @@ public class ServiceConfig {
 	@Bean
 	public SendCartJsonExecutor createSendCartJsonExecutor() {
 		SendCartJsonExecutor executor = new SendCartJsonExecutor();
-		executor.setSendCartJson(sendCartJson);
 		executor.setSendCartKafka(sendCartKafka);
 		return executor;
 	}

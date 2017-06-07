@@ -39,6 +39,7 @@ import ticket.server.model.order.CartStatusStat;
 import ticket.server.model.security.Customer;
 import ticket.server.model.security.DiscountType;
 import ticket.server.model.security.Merchant;
+import ticket.server.model.security.OrderAddress;
 import ticket.server.model.store.Product;
 import ticket.server.model.store.ProductStatus;
 import ticket.server.process.NeedPayCarMonitor;
@@ -47,6 +48,7 @@ import ticket.server.repository.order.CartItemRepository;
 import ticket.server.repository.order.CartRepository;
 import ticket.server.repository.security.CustomerRepository;
 import ticket.server.repository.security.MerchantRepository;
+import ticket.server.repository.security.OrderAddressRepository;
 import ticket.server.repository.store.ProductRepository;
 
 @Service
@@ -73,6 +75,9 @@ public class OrderServiceImpl implements OrderService {
 
 	@Autowired
 	NoNeedPayCartMonitor noNeedPayCartMonitor;
+	
+	@Autowired
+	OrderAddressRepository orderAddressRepository;
 	
 	private final static Logger logger = LoggerFactory.getLogger(OrderServiceImpl.class);
 
@@ -102,6 +107,25 @@ public class OrderServiceImpl implements OrderService {
 
 		Customer dbCustomer = customerRepository.findOne(cart.getCustomer().getId());
 		cart.setCustomer(dbCustomer);
+		
+		//获取所有的用户地址，找到后，改变默认值
+		boolean addressExist = false;
+		List<OrderAddress> orderAddresses = orderAddressRepository.findByCustomer(dbCustomer.getId());
+		for(OrderAddress orderAddress : orderAddresses){
+			if(orderAddress.getAddress().equals(cart.getAddress())){
+				addressExist = true;
+				orderAddress.setLastCheck(true);
+			}else {
+				orderAddress.setLastCheck(false);
+			}
+		}
+		if(!addressExist){
+			OrderAddress orderAddress = new OrderAddress();
+			orderAddress.setAddress(cart.getAddress());
+			orderAddress.setLastCheck(true);
+			orderAddress.setCustomer(dbCustomer);
+			orderAddressRepository.save(orderAddress);
+		}
 		
 		boolean needPay = false;
 		int payTimeLimit = Integer.MAX_VALUE;
@@ -186,7 +210,7 @@ public class OrderServiceImpl implements OrderService {
 		// send cart to process queue
 		if (needPay) {
 			needPayCarMonitor.addCartToQueue(cart);
-		} else {
+		} else{
 			noNeedPayCartMonitor.addCartToQueue(cart);
 		}
 		logger.info("create a new cart: " + cart.toString());

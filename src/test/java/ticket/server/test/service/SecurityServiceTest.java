@@ -18,7 +18,6 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import junit.framework.TestCase;
 import ticket.server.config.HibernateJpaConfig;
-import ticket.server.config.JmsConfig;
 import ticket.server.config.ServiceConfig;
 import ticket.server.model.security.Customer;
 import ticket.server.model.security.Merchant;
@@ -28,7 +27,7 @@ import ticket.server.repository.security.CustomerRepository;
 import ticket.server.service.SecurityService;
 
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(classes = { HibernateJpaConfig.class, JmsConfig.class, ServiceConfig.class })
+@ContextConfiguration(classes = { HibernateJpaConfig.class, ServiceConfig.class })
 public class SecurityServiceTest {
 
 	@Autowired

@@ -18,7 +18,7 @@ import com.fasterxml.jackson.datatype.hibernate5.Hibernate5Module;
 @Configuration
 @EnableWebMvc
 @ComponentScan(basePackages = "ticket.server.controller")
-@Import({ HibernateJpaConfig.class, JmsConfig.class,KafkaConfig.class,ServiceConfig.class })
+@Import({ HibernateJpaConfig.class, KafkaConfig.class,ServiceConfig.class })
 public class WebConfig extends WebMvcConfigurerAdapter {
 
 	@Override

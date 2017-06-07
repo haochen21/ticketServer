@@ -60,6 +60,8 @@ public interface SecurityService {
 	List<Customer> findCustomerByPhone(String phone);
 
 	Customer findCustomerByFullPhone(String phone);
+	
+	Customer findCustomerWithOrderAddress(Long customerId);
 
 	Boolean updateCustomerPhone(Long id, String phone);
 

@@ -18,7 +18,6 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import junit.framework.TestCase;
 import ticket.server.config.HibernateJpaConfig;
-import ticket.server.config.JmsConfig;
 import ticket.server.config.ServiceConfig;
 import ticket.server.exception.BuyEmptyProductException;
 import ticket.server.exception.CartStatusException;
@@ -40,7 +39,7 @@ import ticket.server.service.SecurityService;
 import ticket.server.service.StoreService;
 
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(classes = { HibernateJpaConfig.class, JmsConfig.class, ServiceConfig.class })
+@ContextConfiguration(classes = { HibernateJpaConfig.class, ServiceConfig.class })
 public class OrderServiceTest {
 
 	@Autowired

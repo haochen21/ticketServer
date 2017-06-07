@@ -94,6 +94,9 @@ public class Customer implements Serializable {
 	@JoinTable(name = "CUSTOMER_MERCHANT", joinColumns = @JoinColumn(name = "CUSTOMER_ID"), inverseJoinColumns = @JoinColumn(name = "MERCHANT_ID"))
 	protected Set<Merchant> merchants = new HashSet<Merchant>();
 
+	@OneToMany(mappedBy = "customer", cascade = { CascadeType.PERSIST }, orphanRemoval = true)
+	protected Collection<OrderAddress> orderAddresses = new ArrayList<OrderAddress>();
+	
 	private static final long serialVersionUID = 89421814089152615L;
 
 	public Customer() {
@@ -242,6 +245,14 @@ public class Customer implements Serializable {
 
 	public void setMerchants(Set<Merchant> merchants) {
 		this.merchants = merchants;
+	}
+
+	public Collection<OrderAddress> getOrderAddresses() {
+		return orderAddresses;
+	}
+
+	public void setOrderAddresses(Collection<OrderAddress> orderAddresses) {
+		this.orderAddresses = orderAddresses;
 	}
 
 	@Override
