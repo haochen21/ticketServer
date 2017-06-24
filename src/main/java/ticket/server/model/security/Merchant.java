@@ -24,6 +24,7 @@ import javax.validation.constraints.Size;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import ticket.server.model.Constants;
 import ticket.server.model.order.Cart;
@@ -43,23 +44,30 @@ public class Merchant implements Serializable {
 
 	@NotNull
 	@Column(name = "LOGINNAME", unique = true, nullable = false)
+	@JsonSerialize(using = NameDecodeSerializer.class, as=String.class)
 	protected String loginName;
 
 	@Column(name = "OPENID")
 	protected String openId;
 
-	@NotNull
-	@Column(name = "NAME", nullable = false)
+	@Column(name = "NAME")
 	protected String name;
 
+	@Column(name = "APPROVED")
+	protected Boolean approved;
+	
 	@NotNull
 	@Column(name = "PSW", nullable = false)
 	protected String password;
 
 	@Column(name = "DEVICENO", unique = true)
 	protected String deviceNo;
+	
+	@Column(name = "PRINTNO")
+	@Size(min = 0, max = 255)
+	protected String printNo;
 
-	@Column(name = "PHONE", nullable = false)
+	@Column(name = "PHONE")
 	protected String phone;
 
 	@Column(name = "MAIL")
@@ -108,10 +116,6 @@ public class Merchant implements Serializable {
 	@Column(name = "QRCODE")
 	@Size(min = 0, max = 255)
 	protected String qrCode;
-	
-	@Column(name = "PRINTNO")
-	@Size(min = 0, max = 255)
-	protected String printNo;
 
 	@Enumerated(EnumType.STRING)
 	@Column(name = "DISCOUNTTYPE")
@@ -174,6 +178,14 @@ public class Merchant implements Serializable {
 
 	public void setOpenId(String openId) {
 		this.openId = openId;
+	}
+
+	public Boolean getApproved() {
+		return approved;
+	}
+
+	public void setApproved(Boolean approved) {
+		this.approved = approved;
 	}
 
 	public String getName() {

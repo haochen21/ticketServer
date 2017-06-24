@@ -27,6 +27,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import net.coobird.thumbnailator.Thumbnails;
+import ticket.server.model.security.Merchant;
 import ticket.server.model.store.Category;
 import ticket.server.model.store.Product;
 import ticket.server.service.SecurityService;
@@ -51,6 +52,8 @@ public class StoreController {
 	@RequestMapping(value = "/category", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	public Category createCategory(@RequestBody Category category) {
 		logger.info("create category: " + category.toString());
+		Merchant merchant = securityService.findMerchant(category.getMerchant().getId());
+		category.setMerchant(merchant);
 		category = storeService.saveCategory(category);
 		return category;
 	}
@@ -88,6 +91,8 @@ public class StoreController {
 	@RequestMapping(value = "/product", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	public Product createProduct(@RequestBody Product product) {
 		logger.info("create product: " + product.toString());
+		Merchant merchant = securityService.findMerchant(product.getMerchant().getId());
+		product.setMerchant(merchant);
 		product = storeService.saveProduct(product);
 		return product;
 	}

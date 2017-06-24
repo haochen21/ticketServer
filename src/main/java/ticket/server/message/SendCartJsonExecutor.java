@@ -69,4 +69,7 @@ public class SendCartJsonExecutor {
 		logger.info("add cart to jms queue,size is: " + cartQueue.size() + ", cart is :" + cart.toString());
 	}
 
+	public void manualPrint(Long cartId) {
+		sendCartKafka.manualPrint(cartId);
+	}
 }

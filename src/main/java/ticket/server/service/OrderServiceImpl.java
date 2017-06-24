@@ -104,28 +104,31 @@ public class OrderServiceImpl implements OrderService {
 			logger.info("merchant id: " + dbMerchant.getId() + " discount amount is change....");
 			throw new MerchantDiscountException(dbMerchant, cart.getMerchant().getDiscount());
 		}
-
+        cart.setMerchant(dbMerchant);
+        
 		Customer dbCustomer = customerRepository.findOne(cart.getCustomer().getId());
 		cart.setCustomer(dbCustomer);
 		
-		//获取所有的用户地址，找到后，改变默认值
-		boolean addressExist = false;
-		List<OrderAddress> orderAddresses = orderAddressRepository.findByCustomer(dbCustomer.getId());
-		for(OrderAddress orderAddress : orderAddresses){
-			if(orderAddress.getAddress().equals(cart.getAddress())){
-				addressExist = true;
-				orderAddress.setLastCheck(true);
-			}else {
-				orderAddress.setLastCheck(false);
+		if(cart.getAddress()!= null && !cart.getAddress().equals("")){
+			//获取所有的用户地址，找到后，改变默认值
+			boolean addressExist = false;
+			List<OrderAddress> orderAddresses = orderAddressRepository.findByCustomer(dbCustomer.getId());
+			for(OrderAddress orderAddress : orderAddresses){
+				if(orderAddress.getAddress().equals(cart.getAddress())){
+					addressExist = true;
+					orderAddress.setLastCheck(true);
+				}else {
+					orderAddress.setLastCheck(false);
+				}
 			}
-		}
-		if(!addressExist){
-			OrderAddress orderAddress = new OrderAddress();
-			orderAddress.setAddress(cart.getAddress());
-			orderAddress.setLastCheck(true);
-			orderAddress.setCustomer(dbCustomer);
-			orderAddressRepository.save(orderAddress);
-		}
+			if(!addressExist){
+				OrderAddress orderAddress = new OrderAddress();
+				orderAddress.setAddress(cart.getAddress());
+				orderAddress.setLastCheck(true);
+				orderAddress.setCustomer(dbCustomer);
+				orderAddressRepository.save(orderAddress);
+			}
+		}	
 		
 		boolean needPay = false;
 		int payTimeLimit = Integer.MAX_VALUE;
@@ -198,7 +201,7 @@ public class OrderServiceImpl implements OrderService {
 		Instant takeTime = now.plus(takeTimeLimit, ChronoUnit.MINUTES);
 		cart.setTakeTime(Date.from(takeTime));
 
-		if (cart.getTakeBeginTime()!= null && cart.getTakeBeginTime().before(Date.from(now)) && cart.getTakeEndTime().after(Date.from(now))) {
+		if (!cart.getTakeOut() && cart.getTakeBeginTime().before(Date.from(now)) && cart.getTakeEndTime().after(Date.from(now))) {
 			if (!userCurrentOpenTime) {
 				logger.info("take time is not in current open time");
 				throw new TakeTimeException(cart.getTakeTime(), cart.getTakeBeginTime());
@@ -300,6 +303,10 @@ public class OrderServiceImpl implements OrderService {
 	public Cart cancelCart(Long cartId) throws CartStatusException {
 		Cart cart = cartRepository.findOne(cartId);
 
+		if(cart.getStatus() == CartStatus.CANCELLED){
+			return cart;
+		}
+		
 		if (cart.getNeedPay() && (cart.getStatus() != CartStatus.PURCHASED && cart.getStatus() != CartStatus.PAYING)) {
 			throw new CartStatusException(cart);
 		}

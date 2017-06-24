@@ -2,7 +2,7 @@ package ticket.server.model.security;
 
 public enum LoginResult {
 
-	AUTHORIZED("成功"), LOGINNAMEERROR("用户不存在"), PASSWORDERROR("密码错误");
+	AUTHORIZED("閫氳繃"), LOGINNAMEERROR("鐢ㄦ埛鍚嶄笉瀛樺湪"), PASSWORDERROR("瀵嗙爜閿欒"),	APPROVEDERROR("绠＄悊鍛樻湭瀹℃牳閫氳繃");
 
 	private final String description;
 

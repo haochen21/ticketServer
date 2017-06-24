@@ -35,6 +35,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import ticket.server.model.Constants;
 import ticket.server.model.security.Customer;
 import ticket.server.model.security.Merchant;
+import ticket.server.model.security.NameDecodeSerializer;
 
 @Entity
 @Table(name = "CART", indexes = { @Index(name = "IDX_CART_MERCHANT", columnList = "MERCHANT_ID"),
@@ -54,6 +55,7 @@ public class Cart implements Serializable, Delayed {
 	protected String transactionId;
 
 	@Column(name = "NAME")
+	@JsonSerialize(using = NameDecodeSerializer.class, as=String.class)
 	protected String name;
 
 	@Column(name = "PHONE")

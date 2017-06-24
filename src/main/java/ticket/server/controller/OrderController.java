@@ -36,6 +36,7 @@ import ticket.server.model.order.CartStatusStat;
 import ticket.server.model.order.OrderResult;
 import ticket.server.model.security.Customer;
 import ticket.server.model.security.Merchant;
+import ticket.server.model.security.NickNameEnCode;
 import ticket.server.model.store.Product;
 import ticket.server.process.NeedPayCarMonitor;
 import ticket.server.process.NoNeedPayCartMonitor;
@@ -60,7 +61,7 @@ public class OrderController {
 
 	@Autowired
 	SendCartJsonExecutor sendCartJsonExecutor;
-
+	
 	private final static Logger logger = LoggerFactory.getLogger(OrderController.class);
 
 	@RequestMapping(value = "/cart/page", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
@@ -104,6 +105,11 @@ public class OrderController {
 	public OrderResult purchaseCart(@RequestBody Cart cart) {
 		logger.info("purchase order: " + cart.getCustomer().getLoginName() + ", " + cart.getMerchant().getLoginName());
 
+		if(cart.getName()!= null && !cart.getName().equals("")){
+			String name = NickNameEnCode.INSTANCE.encode(cart.getName());
+			cart.setName(name);
+		}
+		
 		CartNo cartNo = new CartNo();
 		cart.setNo(cartNo.toHexString());
 
@@ -114,11 +120,14 @@ public class OrderController {
 				Cart dbCart = orderService.purchaseCart(cart);
 
 				sendCartJsonExecutor.addCartToQueue(cart);
-				
+
 				process = false;
 				result.setResult(true);
 				result.setError("");
 				result.setCart(dbCart);
+			} catch (JpaOptimisticLockingFailureException ex) {
+				logger.info("purchase order fail...", ex);
+				process = true;
 			} catch (BuyEmptyProductException ex) {
 				logger.info("purchase order fail...", ex);
 				result.setResult(false);
@@ -139,12 +148,9 @@ public class OrderController {
 				result.setResult(false);
 				result.setError("商家商品折扣已经改变");
 				process = false;
-			} catch (JpaOptimisticLockingFailureException ex) {
+			} catch (Exception ex) {
 				logger.info("purchase order fail...", ex);
-				process = true;
-			}catch (Exception ex) {
-				logger.info("purchase order fail...", ex);
-				process = true;
+				process = false;
 			}
 		}
 		return result;
@@ -365,15 +371,16 @@ public class OrderController {
 		}
 		return page;
 	}
-	
+
 	/**
 	 * app测试使用
+	 * 
 	 * @param cartId
 	 * @return
 	 */
 	@RequestMapping(value = "/cart/device/takeById", method = RequestMethod.POST, produces = "application/json")
 	public Page<Cart> takeCartById(@RequestParam(value = "cartId", required = true) Long cartId) {
-		
+
 		CartFilter filter = new CartFilter();
 		filter.setCartId(cartId);
 
@@ -392,4 +399,9 @@ public class OrderController {
 		return page;
 	}
 
+	@RequestMapping(value = "/cart/print/{id}", method = RequestMethod.GET, produces = "application/json")
+	public void takeCartByDevice(@PathVariable Long id) {
+		logger.info("manual print cart,id is: {}",id);
+		sendCartJsonExecutor.manualPrint(id);
+	}
 }

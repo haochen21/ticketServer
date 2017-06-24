@@ -139,6 +139,10 @@ public class SecurityController {
 
 	@RequestMapping(value = "/merchant", method = RequestMethod.POST, consumes = "application/json", produces = "application/json")
 	public Merchant createMerchant(@RequestBody Merchant merchant) {
+		if (merchant.getLoginName() != null && !merchant.getLoginName().equals("")) {
+			String nickName = NickNameEnCode.INSTANCE.encode(merchant.getLoginName());
+			merchant.setLoginName(nickName);
+		}
 		logger.info("register merchant: " + merchant.toString());
 		Merchant dbMerchant = securityService.saveMerchant(merchant);
 		return dbMerchant;
@@ -146,6 +150,10 @@ public class SecurityController {
 
 	@RequestMapping(value = "/merchant", method = RequestMethod.PUT, consumes = "application/json", produces = "application/json")
 	public Merchant modifyMerchant(@RequestBody Merchant merchant) {
+		if (merchant.getLoginName() != null && !merchant.getLoginName().equals("")) {
+			String nickName = NickNameEnCode.INSTANCE.encode(merchant.getLoginName());
+			merchant.setLoginName(nickName);
+		}
 		logger.info("modify merchant: " + merchant.toString());
 		Merchant dbMerchant = securityService.updateMerchant(merchant);
 		return dbMerchant;

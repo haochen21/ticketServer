@@ -177,9 +177,16 @@ public class SecurityServiceImpl implements SecurityService {
 	@Override
 	public MerchantLogin merchantLogin(String loginName, String password) {
 		MerchantLogin login = new MerchantLogin();
-		Merchant merchant = merchantRepository.findByLoginName(loginName);
+		Merchant merchant;
+		try{
+			merchant = merchantRepository.login(loginName);
+		}catch(Exception ex){
+			merchant = null;
+		}
 		if (merchant == null) {
 			login.setResult(LoginResult.LOGINNAMEERROR);
+		} else if (merchant.getApproved() == null || !merchant.getApproved()) {
+			login.setResult(LoginResult.APPROVEDERROR);
 		} else {
 			String superPassword = env.getRequiredProperty("superPassword");
 			String pwd = Password.PASSWORD.MD5(password);
