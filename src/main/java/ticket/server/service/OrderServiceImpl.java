@@ -57,7 +57,7 @@ public class OrderServiceImpl implements OrderService {
 
 	@Autowired
 	MerchantRepository merchantRepository;
-	
+
 	@Autowired
 	CustomerRepository customerRepository;
 
@@ -75,10 +75,10 @@ public class OrderServiceImpl implements OrderService {
 
 	@Autowired
 	NoNeedPayCartMonitor noNeedPayCartMonitor;
-	
+
 	@Autowired
 	OrderAddressRepository orderAddressRepository;
-	
+
 	private final static Logger logger = LoggerFactory.getLogger(OrderServiceImpl.class);
 
 	@Override
@@ -104,32 +104,36 @@ public class OrderServiceImpl implements OrderService {
 			logger.info("merchant id: " + dbMerchant.getId() + " discount amount is change....");
 			throw new MerchantDiscountException(dbMerchant, cart.getMerchant().getDiscount());
 		}
-        cart.setMerchant(dbMerchant);
-        
+		cart.setMerchant(dbMerchant);
+
 		Customer dbCustomer = customerRepository.findOne(cart.getCustomer().getId());
 		cart.setCustomer(dbCustomer);
-		
-		if(cart.getAddress()!= null && !cart.getAddress().equals("")){
-			//获取所有的用户地址，找到后，改变默认值
+
+		if (dbCustomer.getPhone() == null && cart.getPhone() != null) {
+			dbCustomer.setPhone(cart.getPhone());
+		}
+
+		if (cart.getAddress() != null && !cart.getAddress().equals("")) {
+			// 获取所有的用户地址，找到后，改变默认值
 			boolean addressExist = false;
 			List<OrderAddress> orderAddresses = orderAddressRepository.findByCustomer(dbCustomer.getId());
-			for(OrderAddress orderAddress : orderAddresses){
-				if(orderAddress.getAddress().equals(cart.getAddress())){
+			for (OrderAddress orderAddress : orderAddresses) {
+				if (orderAddress.getAddress().equals(cart.getAddress())) {
 					addressExist = true;
 					orderAddress.setLastCheck(true);
-				}else {
+				} else {
 					orderAddress.setLastCheck(false);
 				}
 			}
-			if(!addressExist){
+			if (!addressExist) {
 				OrderAddress orderAddress = new OrderAddress();
 				orderAddress.setAddress(cart.getAddress());
 				orderAddress.setLastCheck(true);
 				orderAddress.setCustomer(dbCustomer);
 				orderAddressRepository.save(orderAddress);
 			}
-		}	
-		
+		}
+
 		boolean needPay = false;
 		int payTimeLimit = Integer.MAX_VALUE;
 		int takeTimeLimit = Integer.MIN_VALUE;
@@ -150,7 +154,7 @@ public class OrderServiceImpl implements OrderService {
 			if (dbMerchant.getDiscountType() != null) {
 				if (dbMerchant.getDiscountType() == DiscountType.PERCNET) {
 					cartItem.setUnitPrice(product.getUnitPrice().multiply(new BigDecimal(dbMerchant.getDiscount())));
-					
+
 				} else if (dbMerchant.getDiscountType() == DiscountType.AMOUNT) {
 					cartItem.setUnitPrice(product.getUnitPrice().subtract(new BigDecimal(dbMerchant.getAmount())));
 				}
@@ -158,7 +162,7 @@ public class OrderServiceImpl implements OrderService {
 				cart.setTotalPrice(totalPrice);
 			}
 			cartItem.setTotalPrice(cartItem.getUnitPrice().multiply(new BigDecimal(cartItem.getQuantity())));
-			
+
 			if (product.getStatus() == ProductStatus.OFFLINE) {
 				logger.info("product id: " + product.getId() + " is offline");
 				throw new BuyEmptyProductException();
@@ -169,7 +173,7 @@ public class OrderServiceImpl implements OrderService {
 				throw new BuyEmptyProductException();
 			}
 			totalPrice = totalPrice.add(cartItem.getTotalPrice());
-			
+
 			if (!product.getInfinite()) {
 				product.setUnitsInStock(product.getUnitsInStock() - cartItem.getQuantity());
 			}
@@ -183,7 +187,7 @@ public class OrderServiceImpl implements OrderService {
 		}
 		cart.setNeedPay(needPay);
 		cart.setTotalPrice(totalPrice);
-		
+
 		if (!needPay) {
 			payTimeLimit = 0;
 			cart.setStatus(CartStatus.CONFIRMED);
@@ -201,7 +205,8 @@ public class OrderServiceImpl implements OrderService {
 		Instant takeTime = now.plus(takeTimeLimit, ChronoUnit.MINUTES);
 		cart.setTakeTime(Date.from(takeTime));
 
-		if (!cart.getTakeOut() && cart.getTakeBeginTime().before(Date.from(now)) && cart.getTakeEndTime().after(Date.from(now))) {
+		if (!cart.getTakeOut() && cart.getTakeBeginTime().before(Date.from(now))
+				&& cart.getTakeEndTime().after(Date.from(now))) {
 			if (!userCurrentOpenTime) {
 				logger.info("take time is not in current open time");
 				throw new TakeTimeException(cart.getTakeTime(), cart.getTakeBeginTime());
@@ -213,7 +218,7 @@ public class OrderServiceImpl implements OrderService {
 		// send cart to process queue
 		if (needPay) {
 			needPayCarMonitor.addCartToQueue(cart);
-		} else{
+		} else {
 			noNeedPayCartMonitor.addCartToQueue(cart);
 		}
 		logger.info("create a new cart: " + cart.toString());
@@ -303,10 +308,10 @@ public class OrderServiceImpl implements OrderService {
 	public Cart cancelCart(Long cartId) throws CartStatusException {
 		Cart cart = cartRepository.findOne(cartId);
 
-		if(cart.getStatus() == CartStatus.CANCELLED){
+		if (cart.getStatus() == CartStatus.CANCELLED) {
 			return cart;
 		}
-		
+
 		if (cart.getNeedPay() && (cart.getStatus() != CartStatus.PURCHASED && cart.getStatus() != CartStatus.PAYING)) {
 			throw new CartStatusException(cart);
 		}

@@ -84,18 +84,29 @@ public class SecurityServiceImpl implements SecurityService {
 		Merchant dbMerchant = merchantRepository.findOne(merchant.getId());
 
 		dbMerchant.setName(merchant.getName());
-		dbMerchant.setDeviceNo(merchant.getDeviceNo());
+		if (merchant.getDeviceNo() != null) {
+			dbMerchant.setDeviceNo(merchant.getDeviceNo());
+		}
 		dbMerchant.setPhone(merchant.getPhone());
 		dbMerchant.setMail(merchant.getMail());
 		dbMerchant.setShortName(merchant.getShortName());
 		dbMerchant.setAddress(merchant.getAddress());
 		dbMerchant.setDescription(merchant.getDescription());
-		dbMerchant.setOpen(merchant.getOpen());
+		if (merchant.getOpen() != null) {
+			dbMerchant.setOpen(merchant.getOpen());
+		}
 		dbMerchant.setTakeByPhone(merchant.getTakeByPhone());
 		dbMerchant.setTakeByPhoneSuffix(merchant.getTakeByPhoneSuffix());
-		dbMerchant.setDiscountType(merchant.getDiscountType());
-		dbMerchant.setDiscount(merchant.getDiscount());
-		dbMerchant.setAmount(merchant.getAmount());
+		if (merchant.getDiscountType() != null) {
+			dbMerchant.setDiscountType(merchant.getDiscountType());
+		}
+		if (merchant.getDiscount() != null) {
+			dbMerchant.setDiscount(merchant.getDiscount());
+		}
+		if (merchant.getAmount() != null) {
+			dbMerchant.setAmount(merchant.getAmount());
+		}
+
 		return merchantRepository.save(dbMerchant);
 	}
 
@@ -178,9 +189,9 @@ public class SecurityServiceImpl implements SecurityService {
 	public MerchantLogin merchantLogin(String loginName, String password) {
 		MerchantLogin login = new MerchantLogin();
 		Merchant merchant;
-		try{
+		try {
 			merchant = merchantRepository.login(loginName);
-		}catch(Exception ex){
+		} catch (Exception ex) {
 			merchant = null;
 		}
 		if (merchant == null) {

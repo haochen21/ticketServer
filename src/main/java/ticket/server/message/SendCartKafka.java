@@ -44,9 +44,13 @@ public class SendCartKafka {
 			kafkaProducer.send(record);
 
 			if (jsonCart.getMerchant().getPrintNo() != null && !jsonCart.getMerchant().getPrintNo().equals("") && cart.getStatus() == CartStatus.CONFIRMED) {
-				String printTopic = "print-" + jsonCart.getMerchant().getPrintNo();
-				ProducerRecord<String, String> printRecord = new ProducerRecord<>(printTopic, cartJson);
-				kafkaProducer.send(printRecord);
+				String[] printNos = jsonCart.getMerchant().getPrintNo().split(",");
+				for(String printNo : printNos){
+					String printTopic = "print-" + printNo;
+					logger.info("printNo is: {}",printNo);
+					ProducerRecord<String, String> printRecord = new ProducerRecord<>(printTopic, cartJson);
+					kafkaProducer.send(printRecord);
+				}
 			}
 		} catch (Exception ex) {
 			logger.info("kafka cart json fail!", ex);
@@ -64,10 +68,13 @@ public class SendCartKafka {
 			String cartJson = mapper.writeValueAsString(jsonCart);
 
 			if (jsonCart.getMerchant().getPrintNo() != null && !jsonCart.getMerchant().getPrintNo().equals("") && jsonCart.getStatus() == CartStatus.CONFIRMED) {
-				String printTopic = "manualprint-" + jsonCart.getMerchant().getPrintNo();
-				ProducerRecord<String, String> printRecord = new ProducerRecord<>(printTopic, cartJson);
-				kafkaProducer.send(printRecord);
-				logger.info("manual print topic {},cart {}",printTopic,jsonCart.getId());
+				String[] printNos = jsonCart.getMerchant().getPrintNo().split(",");
+				for(String printNo : printNos){
+					String printTopic = "manualprint-" + printNo;
+					ProducerRecord<String, String> printRecord = new ProducerRecord<>(printTopic, cartJson);
+					kafkaProducer.send(printRecord);
+					logger.info("manual print topic {},cart {}",printTopic,jsonCart.getId());
+				}	
 			}
 		} catch (Exception ex) {
 			logger.info("kafka cart json fail!", ex);
