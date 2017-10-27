@@ -7,6 +7,8 @@ import java.util.Set;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
@@ -20,6 +22,7 @@ import javax.persistence.TemporalType;
 import javax.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonFormat;
 
 import ticket.server.model.Constants;
 import ticket.server.model.store.Product;
@@ -42,6 +45,11 @@ public class OpenRange implements Serializable {
 	@Column(nullable = false)
 	protected Date endTime;
 
+	@Enumerated(EnumType.STRING)
+	@Column(name = "TYPE", nullable = false)
+	@JsonFormat(shape = JsonFormat.Shape.NUMBER_INT)
+	protected OpenRangeType type;
+	
 	@NotNull
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "MERCHANT_ID", nullable = false)
@@ -79,6 +87,14 @@ public class OpenRange implements Serializable {
 
 	public void setEndTime(Date endTime) {
 		this.endTime = endTime;
+	}
+
+	public OpenRangeType getType() {
+		return type;
+	}
+
+	public void setType(OpenRangeType type) {
+		this.type = type;
 	}
 
 	public Merchant getMerchant() {

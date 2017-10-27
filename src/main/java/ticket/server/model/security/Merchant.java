@@ -1,6 +1,7 @@
 package ticket.server.model.security;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -134,6 +135,13 @@ public class Merchant implements Serializable {
 	@Column(name = "TAKEOUT")
 	protected Boolean takeOut;
 
+	// 最小订单数额
+	@Column(name = "MINIMUMORDER")
+	protected BigDecimal minimumOrder;
+	
+	@Column(name = "PARENTID")
+	protected Long parentId;
+	
 	@OneToMany(mappedBy = "merchant", cascade = { CascadeType.PERSIST, CascadeType.REFRESH }, orphanRemoval = true)
 	protected Collection<Category> categorys = new ArrayList<Category>();
 
@@ -370,6 +378,22 @@ public class Merchant implements Serializable {
 
 	public void setPrintNo(String printNo) {
 		this.printNo = printNo;
+	}
+
+	public BigDecimal getMinimumOrder() {
+		return minimumOrder;
+	}
+
+	public void setMinimumOrder(BigDecimal minimumOrder) {
+		this.minimumOrder = minimumOrder;
+	}
+
+	public Long getParentId() {
+		return parentId;
+	}
+
+	public void setParentId(Long parentId) {
+		this.parentId = parentId;
 	}
 
 	public MerchantIntro getIntroduce() {

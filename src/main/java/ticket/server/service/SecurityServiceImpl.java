@@ -106,6 +106,7 @@ public class SecurityServiceImpl implements SecurityService {
 		if (merchant.getAmount() != null) {
 			dbMerchant.setAmount(merchant.getAmount());
 		}
+		dbMerchant.setMinimumOrder(merchant.getMinimumOrder());
 
 		return merchantRepository.save(dbMerchant);
 	}
@@ -453,7 +454,15 @@ public class SecurityServiceImpl implements SecurityService {
 		Customer customer = customerRepository.findOne(customerId);
 		customer.getMerchants();
 		Merchant m = merchantRepository.findOne(merchantId);
-		customer.getMerchants().add(m);
+		if(m != null){
+			List<Merchant> childMerchants = merchantRepository.findByParentId(merchantId);
+			if(childMerchants != null && childMerchants.size() >0){
+				customer.getMerchants().addAll(childMerchants);
+			}else {
+
+				customer.getMerchants().add(m);
+			}
+		}		
 	}
 
 	@Override
@@ -483,4 +492,5 @@ public class SecurityServiceImpl implements SecurityService {
 	public List<OpenRange> findOpenRangeByMerchant(Long merchantId) {
 		return openRangeRepository.findByMerchant(merchantId);
 	}
+
 }

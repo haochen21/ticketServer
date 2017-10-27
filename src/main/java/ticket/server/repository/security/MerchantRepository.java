@@ -57,4 +57,7 @@ public interface MerchantRepository extends BaseRepository<Merchant, Long>, Merc
 
 	@Query(value = "select m from Merchant m LEFT JOIN FETCH m.introduce where m.id = :id")
 	Merchant findWithIntroduce(@Param("id") Long id);
+	
+	@Query(value = "select m from Merchant m where m.parentId = :parentId")
+	List<Merchant> findByParentId(@Param("parentId") Long parentId);
 }

@@ -11,6 +11,7 @@ import ticket.server.exception.BuyEmptyProductException;
 import ticket.server.exception.CartPaidException;
 import ticket.server.exception.CartStatusException;
 import ticket.server.exception.MerchantDiscountException;
+import ticket.server.exception.OffTimeException;
 import ticket.server.exception.ProductPriceException;
 import ticket.server.exception.TakeTimeException;
 import ticket.server.model.order.Cart;
@@ -21,7 +22,7 @@ import ticket.server.model.store.Product;
 
 public interface OrderService {
 
-	Cart purchaseCart(Cart cart) throws BuyEmptyProductException, ProductPriceException, TakeTimeException,MerchantDiscountException;
+	Cart purchaseCart(Cart cart) throws BuyEmptyProductException, ProductPriceException, TakeTimeException,MerchantDiscountException,OffTimeException;
 
 	Cart payingCart(Long cartId) throws CartStatusException;
 
