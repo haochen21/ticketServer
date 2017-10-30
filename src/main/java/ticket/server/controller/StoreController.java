@@ -114,6 +114,17 @@ public class StoreController {
 		List<Product> products = storeService.findProductsByMerchant(merchantId);
 		return products;
 	}
+	
+	@RequestMapping(value = "/product/quicksearch/{merchantId}/{code}", method = RequestMethod.GET)
+	public List<Product> quickSearch(@PathVariable Long merchantId,@PathVariable String code) {
+		List<Product> products = storeService.quickSearch(merchantId, code);
+		return products;
+	}
+	
+	@RequestMapping(value = "/product/exist/{merchantId}/{name}", method = RequestMethod.GET)
+	public @ResponseBody Boolean existsProductByName(@PathVariable Long merchantId,@PathVariable String name) {
+		return storeService.existProductByName(merchantId, name);
+	}
 
 	@CrossOrigin
 	@RequestMapping(value = "/product/image", method = RequestMethod.POST)

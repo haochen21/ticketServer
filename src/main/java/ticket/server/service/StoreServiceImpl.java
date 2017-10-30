@@ -40,6 +40,8 @@ public class StoreServiceImpl implements StoreService {
 	@Override
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	public Product saveProduct(Product product) {
+		// 判断商品是否已经存在
+		
 		if (product.getOpenRanges() != null) {
 			Set<OpenRange> tempOpenRanges = new HashSet<>();
 			for (OpenRange openRange : product.getOpenRanges()) {
@@ -68,6 +70,9 @@ public class StoreServiceImpl implements StoreService {
 		megerProduct.setStatus(product.getStatus());
 		megerProduct.setCategory(product.getCategory());
 		megerProduct.setOpenRanges(product.getOpenRanges());
+		megerProduct.setSequence(product.getSequence());
+		megerProduct.setCode(product.getCode());
+
 		return productRepository.save(megerProduct);
 	}
 
@@ -81,15 +86,15 @@ public class StoreServiceImpl implements StoreService {
 	public Product findProduct(Long productId) {
 		Product product = productRepository.findOne(productId);
 		LocalTime zeroTime = LocalTime.now();
-		zeroTime = zeroTime.with(ChronoField.HOUR_OF_DAY,0);
-		zeroTime = zeroTime.with(ChronoField.MINUTE_OF_HOUR,0);
-		zeroTime = zeroTime.with(ChronoField.SECOND_OF_MINUTE,0);
-		zeroTime = zeroTime.with(ChronoField.MILLI_OF_SECOND,0);
-		for(OpenRange op :product.getOpenRanges()){
-			if(op.getBeginTime() == null){
+		zeroTime = zeroTime.with(ChronoField.HOUR_OF_DAY, 0);
+		zeroTime = zeroTime.with(ChronoField.MINUTE_OF_HOUR, 0);
+		zeroTime = zeroTime.with(ChronoField.SECOND_OF_MINUTE, 0);
+		zeroTime = zeroTime.with(ChronoField.MILLI_OF_SECOND, 0);
+		for (OpenRange op : product.getOpenRanges()) {
+			if (op.getBeginTime() == null) {
 				op.setBeginTime(java.sql.Time.valueOf(zeroTime));
 			}
-			if(op.getEndTime() == null){
+			if (op.getEndTime() == null) {
 				op.setEndTime(java.sql.Time.valueOf(zeroTime));
 			}
 		}
@@ -100,15 +105,15 @@ public class StoreServiceImpl implements StoreService {
 	public Product findWithMerchant(Long id) {
 		Product product = productRepository.findWithMerchant(id);
 		LocalTime zeroTime = LocalTime.now();
-		zeroTime = zeroTime.with(ChronoField.HOUR_OF_DAY,0);
-		zeroTime = zeroTime.with(ChronoField.MINUTE_OF_HOUR,0);
-		zeroTime = zeroTime.with(ChronoField.SECOND_OF_MINUTE,0);
-		zeroTime = zeroTime.with(ChronoField.MILLI_OF_SECOND,0);
-		for(OpenRange op :product.getOpenRanges()){
-			if(op.getBeginTime() == null){
+		zeroTime = zeroTime.with(ChronoField.HOUR_OF_DAY, 0);
+		zeroTime = zeroTime.with(ChronoField.MINUTE_OF_HOUR, 0);
+		zeroTime = zeroTime.with(ChronoField.SECOND_OF_MINUTE, 0);
+		zeroTime = zeroTime.with(ChronoField.MILLI_OF_SECOND, 0);
+		for (OpenRange op : product.getOpenRanges()) {
+			if (op.getBeginTime() == null) {
 				op.setBeginTime(java.sql.Time.valueOf(zeroTime));
 			}
-			if(op.getEndTime() == null){
+			if (op.getEndTime() == null) {
 				op.setEndTime(java.sql.Time.valueOf(zeroTime));
 			}
 		}
@@ -123,23 +128,50 @@ public class StoreServiceImpl implements StoreService {
 	@Override
 	public List<Product> findProductsByMerchant(Long merchantId) {
 		List<Product> products = productRepository.findByMerchantWithCategory(merchantId);
-		for(Product product: products){
+		for (Product product : products) {
 			LocalTime zeroTime = LocalTime.now();
-			zeroTime = zeroTime.with(ChronoField.HOUR_OF_DAY,0);
-			zeroTime = zeroTime.with(ChronoField.MINUTE_OF_HOUR,0);
-			zeroTime = zeroTime.with(ChronoField.SECOND_OF_MINUTE,0);
-			zeroTime = zeroTime.with(ChronoField.MILLI_OF_SECOND,0);
-			for(OpenRange op :product.getOpenRanges()){
-				if(op.getBeginTime() == null){
+			zeroTime = zeroTime.with(ChronoField.HOUR_OF_DAY, 0);
+			zeroTime = zeroTime.with(ChronoField.MINUTE_OF_HOUR, 0);
+			zeroTime = zeroTime.with(ChronoField.SECOND_OF_MINUTE, 0);
+			zeroTime = zeroTime.with(ChronoField.MILLI_OF_SECOND, 0);
+			for (OpenRange op : product.getOpenRanges()) {
+				if (op.getBeginTime() == null) {
 					op.setBeginTime(java.sql.Time.valueOf(zeroTime));
 				}
-				if(op.getEndTime() == null){
+				if (op.getEndTime() == null) {
 					op.setEndTime(java.sql.Time.valueOf(zeroTime));
 				}
 			}
 		}
-		
+
 		return products;
+	}
+
+	@Override
+	public List<Product> quickSearch(Long merchantId, String code) {
+		List<Product> products = productRepository.quickSearch(merchantId, code);
+		for (Product product : products) {
+			LocalTime zeroTime = LocalTime.now();
+			zeroTime = zeroTime.with(ChronoField.HOUR_OF_DAY, 0);
+			zeroTime = zeroTime.with(ChronoField.MINUTE_OF_HOUR, 0);
+			zeroTime = zeroTime.with(ChronoField.SECOND_OF_MINUTE, 0);
+			zeroTime = zeroTime.with(ChronoField.MILLI_OF_SECOND, 0);
+			for (OpenRange op : product.getOpenRanges()) {
+				if (op.getBeginTime() == null) {
+					op.setBeginTime(java.sql.Time.valueOf(zeroTime));
+				}
+				if (op.getEndTime() == null) {
+					op.setEndTime(java.sql.Time.valueOf(zeroTime));
+				}
+			}
+		}
+
+		return products;
+	}
+
+	@Override
+	public boolean existProductByName(Long merchantId, String name) {
+		return productRepository.existsByName(merchantId, name);
 	}
 
 	@Override

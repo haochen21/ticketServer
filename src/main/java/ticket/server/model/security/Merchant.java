@@ -139,8 +139,15 @@ public class Merchant implements Serializable {
 	@Column(name = "MINIMUMORDER")
 	protected BigDecimal minimumOrder;
 	
+	// 打包费用
+	@Column(name = "PACKAGEFEE")
+	protected BigDecimal packageFee;
+	
 	@Column(name = "PARENTID")
 	protected Long parentId;
+	
+	@Column(name = "SHOWINTRODUCE")
+	protected Boolean showIntroduce;
 	
 	@OneToMany(mappedBy = "merchant", cascade = { CascadeType.PERSIST, CascadeType.REFRESH }, orphanRemoval = true)
 	protected Collection<Category> categorys = new ArrayList<Category>();
@@ -388,12 +395,28 @@ public class Merchant implements Serializable {
 		this.minimumOrder = minimumOrder;
 	}
 
+	public BigDecimal getPackageFee() {
+		return packageFee;
+	}
+
+	public void setPackageFee(BigDecimal packageFee) {
+		this.packageFee = packageFee;
+	}
+
 	public Long getParentId() {
 		return parentId;
 	}
 
 	public void setParentId(Long parentId) {
 		this.parentId = parentId;
+	}
+
+	public Boolean getShowIntroduce() {
+		return showIntroduce;
+	}
+
+	public void setShowIntroduce(Boolean showIntroduce) {
+		this.showIntroduce = showIntroduce;
 	}
 
 	public MerchantIntro getIntroduce() {

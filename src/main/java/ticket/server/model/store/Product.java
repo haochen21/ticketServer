@@ -91,6 +91,10 @@ public class Product implements Serializable {
 	@Size(min = 0, max = 255)
 	protected String imageSource;
 
+	@Column(name = "CODE")
+	@Size(min = 0, max = 10)
+	protected String code;
+	
 	@Temporal(TemporalType.TIMESTAMP)
 	@Column(updatable = false)
 	@org.hibernate.annotations.CreationTimestamp
@@ -105,6 +109,9 @@ public class Product implements Serializable {
 	@Column(name = "STATUS", nullable = false)
 	@JsonFormat(shape = JsonFormat.Shape.NUMBER_INT)
 	protected ProductStatus status;
+	
+	@Column(name = "SEQUENCE")
+	protected Integer sequence;
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "CATEGORY_ID")
@@ -230,6 +237,22 @@ public class Product implements Serializable {
 
 	public void setImageSource(String imageSource) {
 		this.imageSource = imageSource;
+	}
+
+	public Integer getSequence() {
+		return sequence;
+	}
+
+	public void setSequence(Integer sequence) {
+		this.sequence = sequence;
+	}
+
+	public String getCode() {
+		return code;
+	}
+
+	public void setCode(String code) {
+		this.code = code;
 	}
 
 	public Category getCategory() {

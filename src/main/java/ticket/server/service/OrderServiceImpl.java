@@ -89,50 +89,50 @@ public class OrderServiceImpl implements OrderService {
 
 	@Override
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED, rollbackFor = { BuyEmptyProductException.class,
-			ProductPriceException.class, TakeTimeException.class, MerchantDiscountException.class,OffTimeException.class })
-	public Cart purchaseCart(Cart cart)
-			throws BuyEmptyProductException, ProductPriceException, TakeTimeException, MerchantDiscountException,OffTimeException {
+			ProductPriceException.class, TakeTimeException.class, MerchantDiscountException.class,
+			OffTimeException.class })
+	public Cart purchaseCart(Cart cart) throws BuyEmptyProductException, ProductPriceException, TakeTimeException,
+			MerchantDiscountException, OffTimeException {
 		Merchant dbMerchant = merchantRepository.findWithOpenRange(cart.getMerchant().getId());
 
 		List<OpenRange> offTimes = new ArrayList<>();
-		if(dbMerchant.getOpenRanges()!= null && dbMerchant.getOpenRanges().size()>0){
-			for(OpenRange openRange : dbMerchant.getOpenRanges()){
-				if(openRange.getType() == OpenRangeType.OFF){
+		if (dbMerchant.getOpenRanges() != null && dbMerchant.getOpenRanges().size() > 0) {
+			for (OpenRange openRange : dbMerchant.getOpenRanges()) {
+				if (openRange.getType() == OpenRangeType.OFF) {
 					offTimes.add(openRange);
 				}
 			}
 		}
-		if(offTimes.size() >0){
-			LocalTime nowTime = LocalTime.now(); 
-			ZoneId zone = ZoneId.systemDefault();
-			
+		if (offTimes.size() > 0) {
+			LocalTime nowTime = LocalTime.now();
+
 			LocalTime zeroTime = LocalTime.now();
 			zeroTime = zeroTime.with(ChronoField.HOUR_OF_DAY, 0);
 			zeroTime = zeroTime.with(ChronoField.MINUTE_OF_HOUR, 0);
 			zeroTime = zeroTime.with(ChronoField.SECOND_OF_MINUTE, 0);
 			zeroTime = zeroTime.with(ChronoField.MILLI_OF_SECOND, 0);
-			
-			for(OpenRange openRange : offTimes){
+
+			for (OpenRange openRange : offTimes) {
 				LocalTime beginLocalTime = null;
-				if(openRange.getBeginTime() == null){
+				if (openRange.getBeginTime() == null) {
 					beginLocalTime = zeroTime;
-				}else {
-					beginLocalTime = ((java.sql.Time)openRange.getBeginTime()).toLocalTime();
+				} else {
+					beginLocalTime = ((java.sql.Time) openRange.getBeginTime()).toLocalTime();
 				}
 				LocalTime endLocalTime = null;
-				if(openRange.getEndTime() == null){
+				if (openRange.getEndTime() == null) {
 					endLocalTime = zeroTime;
-				}else {
-					endLocalTime = ((java.sql.Time)openRange.getEndTime()).toLocalTime();
+				} else {
+					endLocalTime = ((java.sql.Time) openRange.getEndTime()).toLocalTime();
 				}
-			    			
-			    if(nowTime.isAfter(beginLocalTime) && nowTime.isBefore(endLocalTime)){
-			    	logger.info("merchant id: " + dbMerchant.getId() + " is offTime....");
-			    	throw new OffTimeException(beginLocalTime,endLocalTime);
-			    }
-			}			
+
+				if (nowTime.isAfter(beginLocalTime) && nowTime.isBefore(endLocalTime)) {
+					logger.info("merchant id: " + dbMerchant.getId() + " is offTime....");
+					throw new OffTimeException(beginLocalTime, endLocalTime);
+				}
+			}
 		}
-				
+
 		if (cart.getMerchant().getDiscountType() != dbMerchant.getDiscountType()) {
 			logger.info("merchant id: " + dbMerchant.getId() + " discountType is change....");
 			throw new MerchantDiscountException(dbMerchant, cart.getMerchant().getDiscount());
@@ -231,6 +231,9 @@ public class OrderServiceImpl implements OrderService {
 			takeTimeLimit = product.getTakeTimeLimit() > takeTimeLimit ? product.getTakeTimeLimit() : takeTimeLimit;
 		}
 		cart.setNeedPay(needPay);
+		if (dbMerchant.getPackageFee() != null) {
+			totalPrice = totalPrice.add(dbMerchant.getPackageFee());
+		}
 		cart.setTotalPrice(totalPrice);
 
 		if (!needPay) {
@@ -250,8 +253,7 @@ public class OrderServiceImpl implements OrderService {
 		Instant takeTime = now.plus(takeTimeLimit, ChronoUnit.MINUTES);
 		cart.setTakeTime(Date.from(takeTime));
 
-		if (cart.getTakeBeginTime().before(Date.from(now))
-				&& cart.getTakeEndTime().after(Date.from(now))) {
+		if (cart.getTakeBeginTime().before(Date.from(now)) && cart.getTakeEndTime().after(Date.from(now))) {
 			if (!userCurrentOpenTime) {
 				logger.info("take time is not in current open time");
 				throw new TakeTimeException(cart.getTakeTime(), cart.getTakeBeginTime());
