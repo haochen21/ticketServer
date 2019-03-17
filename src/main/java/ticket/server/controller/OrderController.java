@@ -300,39 +300,42 @@ public class OrderController {
 			if (customer != null) {
 				customers.add(customer);
 			}
-		} else if (phone != null && !phone.equals("")) {
-			if (merchant.getTakeByPhone() && merchant.getTakeByPhoneSuffix()
-					&& (phone.length() == 11 || phone.length() == 4)) {
-				List<Customer> dbCustomers = securityService.findCustomerByPhone(phone);
-				if (dbCustomers != null && dbCustomers.size() > 0) {
-					customers.addAll(dbCustomers);
-				}
-			} else if (merchant.getTakeByPhone() && phone.length() == 11) {
+			if (customers.size() == 0) {
+				logger.info("can't find customer,cardNo: " + cardNo + ", phone: " + phone);
+				// 如果消费者不存在，返回卡号没使用状态
+				List<Cart> carts = new ArrayList<Cart>();
+				Cart cart = new Cart();
+				cart.setCardUsed(false);
+				carts.add(cart);
+				Page<Cart> page = new PageImpl<>(carts, new PageRequest(0, 1), 0);
+				return page;
+			}
+		} else if (phone != null && !phone.equals("") && phone.length() == 11) {
+			if (merchant.getTakeByPhone()) {
 				Customer customer = securityService.findCustomerByFullPhone(phone);
 				if (customer != null) {
 					customers.add(customer);
 				}
-			} else if (merchant.getTakeByPhoneSuffix() && phone.length() == 4) {
-				List<Customer> dbCustomers = securityService.findCustomerByPhone(phone);
-				if (dbCustomers != null && dbCustomers.size() > 0) {
-					customers.addAll(dbCustomers);
-				}
 			}
-		}
-		if (customers.size() == 0) {
-			logger.info("can't find customer,cardNo: " + cardNo + ", phone: " + phone);
-			// 如果消费者不存在，返回卡号没使用状态
-			List<Cart> carts = new ArrayList<Cart>();
-			Cart cart = new Cart();
-			cart.setCardUsed(false);
-			carts.add(cart);
-			Page<Cart> page = new PageImpl<>(carts, new PageRequest(0, 1), 0);
-			return page;
-		}
+			if (customers.size() == 0) {
+				logger.info("can't find customer,cardNo: " + cardNo + ", phone: " + phone);
+				// 如果消费者不存在，返回卡号没使用状态
+				List<Cart> carts = new ArrayList<Cart>();
+				Cart cart = new Cart();
+				cart.setCardUsed(false);
+				carts.add(cart);
+				Page<Cart> page = new PageImpl<>(carts, new PageRequest(0, 1), 0);
+				return page;
+			}
+		}		
 
 		CartFilter filter = new CartFilter();
 		filter.setMerchantId(merchant.getId());
-		filter.setCustomerIds(customers.stream().map(Customer::getId).collect(Collectors.toList()));
+		if(customers.size() > 0) {
+			filter.setCustomerIds(customers.stream().map(Customer::getId).collect(Collectors.toList()));
+		}else if(phone != null && !phone.equals("") && phone.length() != 11){
+			filter.setTakeNo(phone);
+		}		
 
 		List<CartStatus> statuses = new ArrayList<>();
 		statuses.add(CartStatus.CONFIRMED);

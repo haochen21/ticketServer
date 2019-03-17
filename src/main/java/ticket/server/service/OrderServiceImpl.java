@@ -27,6 +27,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import redis.clients.jedis.Jedis;
+import redis.clients.jedis.JedisPool;
 import ticket.server.exception.BuyEmptyProductException;
 import ticket.server.exception.CartPaidException;
 import ticket.server.exception.CartStatusException;
@@ -84,6 +86,9 @@ public class OrderServiceImpl implements OrderService {
 
 	@Autowired
 	OrderAddressRepository orderAddressRepository;
+
+	@Autowired
+	private JedisPool jedisPool;
 
 	private final static Logger logger = LoggerFactory.getLogger(OrderServiceImpl.class);
 
@@ -257,6 +262,25 @@ public class OrderServiceImpl implements OrderService {
 			if (!userCurrentOpenTime) {
 				logger.info("take time is not in current open time");
 				throw new TakeTimeException(cart.getTakeTime(), cart.getTakeBeginTime());
+			}
+		}
+
+		String redisKey = "merchant-" + cart.getMerchant().getId();
+		Jedis jedis = null;
+		try {
+			jedis = jedisPool.getResource();
+			long takeNoValue = jedis.incr(redisKey);
+			if (takeNoValue >= 9999) {
+				jedis.set(redisKey, "0");
+			}
+			String takeNo = String.format("%04d", takeNoValue);
+			cart.setTakeNo("" + takeNo);
+		} catch (Exception ex) {
+			logger.error("redis error!", ex);
+			cart.setTakeNo("" + (int) ((Math.random() * 9 + 1) * 1000));
+		} finally {
+			if (jedis != null) {
+				jedis.close();
 			}
 		}
 

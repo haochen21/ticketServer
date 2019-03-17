@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
 
-	<property name="LOG_HOME" value="/Users/hugh/Documents/java/apache-tomcat-8.0.37/log" />
+	<property name="LOG_HOME" value="C:\java\apache-tomcat-8.0.37\log" />
 	<appender name="REPOSITORYFILE"
 		class="ch.qos.logback.core.rolling.RollingFileAppender">
 		<append>true</append>

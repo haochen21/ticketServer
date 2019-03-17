@@ -48,6 +48,8 @@ public class CartFilter implements Serializable {
 	private Date takeTime;
 
 	private Long productId;
+	
+	private String takeNo;
 
 	private int page;
 
@@ -173,6 +175,14 @@ public class CartFilter implements Serializable {
 		this.productId = productId;
 	}
 
+	public String getTakeNo() {
+		return takeNo;
+	}
+
+	public void setTakeNo(String takeNo) {
+		this.takeNo = takeNo;
+	}
+
 	public int getPage() {
 		return page;
 	}
@@ -241,6 +251,9 @@ public class CartFilter implements Serializable {
 		}
 		if (no != null && !no.equals("")) {
 			predicates.add(cb.like(root.<String>get("no"), "%" + no + "%"));
+		}
+		if (takeNo != null && !takeNo.equals("")) {
+			predicates.add(cb.equal(root.<String>get("takeNo"), takeNo));
 		}
 		if (merchantId != null) {
 			predicates.add(cb.equal(root.get("merchant").<Long>get("id"), merchantId));
@@ -321,6 +334,9 @@ public class CartFilter implements Serializable {
 		}
 		if (merchantId != null) {
 			predicates.add(cb.equal(root.get("merchant").<Long>get("id"), merchantId));
+		}
+		if (takeNo != null && !takeNo.equals("")) {
+			predicates.add(cb.equal(root.<String>get("takeNo"), takeNo));
 		}
 		if (customerIds != null) {
 			if (customerIds.size() == 1) {

@@ -126,6 +126,9 @@ public class Cart implements Serializable, Delayed {
 	// 外卖
 	@Column(name = "TAKEOUT")
 	protected Boolean takeOut;
+	
+	@Column(name = "TAKENO")
+	protected String takeNo;
 
 	@OneToMany(mappedBy = "cart", cascade = { CascadeType.PERSIST, CascadeType.REFRESH,
 			CascadeType.REMOVE }, orphanRemoval = true)
@@ -341,6 +344,14 @@ public class Cart implements Serializable, Delayed {
 
 	public void setTakeOut(Boolean takeOut) {
 		this.takeOut = takeOut;
+	}
+
+	public String getTakeNo() {
+		return takeNo;
+	}
+
+	public void setTakeNo(String takeNo) {
+		this.takeNo = takeNo;
 	}
 
 	@Override

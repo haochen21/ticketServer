@@ -44,6 +44,8 @@ dependencies {
     
     compile 'org.apache.kafka:kafka-clients:0.10.2.1'
     
+    compile group: 'redis.clients', name: 'jedis', version: '2.9.0'
+    
     testCompile 'junit:junit:4.12'
     testCompile 'org.springframework:spring-test:4.3.0.RELEASE'
 }
